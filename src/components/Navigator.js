@@ -10,4 +10,6 @@ const StackNavigator = createStackNavigator({
   EmailInputscreen: EmailInputscreen,
   PasswordInputscreen: PasswordInputscreen,
 });
+
+
 export default createAppContainer(StackNavigator);
