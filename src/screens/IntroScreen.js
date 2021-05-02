@@ -50,7 +50,7 @@ export class IntroScreen extends Component {
                     </View>
                     <Image
                 source={require('../assets/image/bACE CAMP.png')}
-                style={{width: '100%', height: 200}}
+                style={{width: '100%', height: 150}}
                 PlaceholderContent={<ActivityIndicator />}
                     />
                     <View style={styles.contentView}>
