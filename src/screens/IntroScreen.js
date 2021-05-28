@@ -7,7 +7,7 @@ import { Assets } from 'react-navigation-stack';
 
     const styles = StyleSheet.create({
         container: {
-          backgroundColor: '#F4F6FA',
+            backgroundColor: '#ffffff',
           height: '100%',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -27,22 +27,28 @@ import { Assets } from 'react-navigation-stack';
         contentView: {
           marginTop: 40,
           justifyContent: 'center',
-          alignItems: 'center',
+        alignItems: 'center',
+          backgroundColor: '#ffffff',
         },
+        
         
       });
 
     
 
 export class IntroScreen extends Component {
+
+    static navigationOptions = {
+        headerShown: false,
+      };
+
     render() {
         return (
             <View>
-                <Text> IntroScreen </Text>
             
             <View style={styles.container}>
         <View style={styles.headerContainer}>
-            <Icon name="md-tennisball-outline" size={80} type="ionicon" />
+            <Icon name="md-tennisball-outline" size={50} type="ionicon" />
             <Text h4>Welcome to Bace Camp</Text>
             <Text h5 style={{ textAlign: 'center' }}>
                             The best App for Tennis Fitness workouts and Competition planner
@@ -50,7 +56,7 @@ export class IntroScreen extends Component {
                     </View>
                     <Image
                 source={require('../assets/image/bACE_CAMP-logo.png')}
-                style={{width: '100%', height: 150}}
+                style={{width: '100%', height: 300}}
                 PlaceholderContent={<ActivityIndicator />}
                     />
                     <View style={styles.contentView}>

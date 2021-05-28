@@ -1,14 +1,14 @@
 import React, { Component } from 'react'
 import { Text, View } from 'react-native'
 
-export class EmailInputScreen extends Component {
+export class SetGoalScreen extends Component {
     render() {
         return (
             <View>
-                <Text> EmailInputScreen </Text>
+                <Text> SetGoalScreen </Text>
             </View>
         )
     }
 }
 
-export default EmailInputScreen
+export default SetGoalScreen

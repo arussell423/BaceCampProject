@@ -1,7 +1,3 @@
-import React, {Component} from 'react';
-import Navigator from './src/components/Navigator';
-
-
 import {firebase} from "@firebase/app"; 
 import '@firebase/firestore';
 import '@firebase/auth';
@@ -28,15 +24,6 @@ if (!firebase.apps.length) {
     firebase.app(); // if already initialized, use that one
  }
 
+const auth = firebase.auth();
 
-export class App extends Component {
-  render() {
-    return <Navigator />;
-    
-  }
-}
-  
-export default App;
-
-
-
+export { firebase }  ;
