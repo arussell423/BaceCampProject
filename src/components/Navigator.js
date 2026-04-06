@@ -1,6 +1,8 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+// Required for react-native-gesture-handler on web
+import 'react-native-gesture-handler';
 
 // Auth screens
 import onBoardScreen from '../screens/onBoardScreen';

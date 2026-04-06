@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './src/components/Firebase';
@@ -31,18 +33,37 @@ export class App extends Component {
 
   render() {
     const { loading, user, role } = this.state;
+
+    let content;
     if (loading) {
-      return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      content = (
+        <View style={styles.loading}>
           <ActivityIndicator size="large" color="#008000" />
         </View>
       );
+    } else if (!user) {
+      content = <AuthNavigator />;
+    } else if (!role) {
+      content = <ProfileSelectNavigator />;
+    } else if (role === 'coach') {
+      content = <CoachNavigator />;
+    } else {
+      content = <PlayerNavigator />;
     }
-    if (!user) return <AuthNavigator />;
-    if (!role) return <ProfileSelectNavigator />;
-    if (role === 'coach') return <CoachNavigator />;
-    return <PlayerNavigator />;
+
+    return (
+      <GestureHandlerRootView style={styles.root}>
+        <SafeAreaProvider>
+          {content}
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    );
   }
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});
 
 export default App;
