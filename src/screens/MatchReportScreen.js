@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, SafeAreaView,
   TouchableOpacity, TextInput, Alert,
@@ -73,15 +74,7 @@ export class MatchReportScreen extends Component {
 
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-            <Icon name="arrow-back" type="material" color="#008000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Match Report</Text>
-          <TouchableOpacity onPress={() => this.setState({ showPast: !showPast })}>
-            <Icon name="history" type="material" color="#008000" />
-          </TouchableOpacity>
-        </View>
+        <AppHeader navigation={this.props.navigation} title="Match Report" homeScreen="HomeScreen" />
 
         <ScrollView contentContainerStyle={styles.container}>
           {!showPast ? (

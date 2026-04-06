@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, TextInput, Alert, Modal, ActivityIndicator,
@@ -104,13 +105,7 @@ export class CoachRosterScreen extends Component {
 
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-            <Icon name="arrow-back" type="material" color="#008000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Players</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <AppHeader navigation={this.props.navigation} title="My Players" homeScreen="CoachHomeScreen" />
 
         {loading ? (
           <ActivityIndicator size="large" color="#008000" style={{ marginTop: 60 }} />

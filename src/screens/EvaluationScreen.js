@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, TouchableOpacity,
   SafeAreaView, Alert,
@@ -220,13 +221,7 @@ export class EvaluationScreen extends Component {
     const { activeTab } = this.state;
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-            <Icon name="arrow-back" type="material" color="#008000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Evaluation</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <AppHeader navigation={this.props.navigation} title="Evaluation" homeScreen="HomeScreen" />
 
         {/* Tabs */}
         <View style={styles.tabBar}>

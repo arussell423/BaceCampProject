@@ -29,7 +29,7 @@ export class SelectProfileScreen extends Component {
           style={styles.logo}
         />
         <Text h4 style={styles.title}>Who are you?</Text>
-        <Text style={styles.subtitle}>Select your profile type to get started</Text>
+        <Text style={styles.subtitle}>Select your profile type. You can switch roles later in your Profile settings.</Text>
 
         {saving ? (
           <ActivityIndicator size="large" color="#008000" style={{ marginTop: 20 }} />

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, ActivityIndicator,

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, Alert, FlatList,
@@ -116,13 +117,7 @@ export class SpeedTrackingScreen extends Component {
 
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-            <Icon name="arrow-back" type="material" color="#008000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Speed Drills </Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <AppHeader navigation={this.props.navigation} title="Speed Drills" homeScreen="HomeScreen" />
 
         {/* Drill selector */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.drillBar}>

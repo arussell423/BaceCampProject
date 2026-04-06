@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, StyleSheet, Dimensions, Image } from "react-native";
+import { View, StyleSheet, Dimensions, Image, TouchableOpacity } from "react-native";
 import { Text, Button, Icon } from "react-native-elements";
 
 const { width } = Dimensions.get("window");
@@ -61,6 +61,13 @@ export class onBoardScreen extends Component {
           containerStyle={{ width: width * 0.75, marginTop: 28 }}
           onPress={this.next}
         />
+
+        <TouchableOpacity
+          style={styles.coachLink}
+          onPress={() => this.props.navigation.navigate("LoginScreen")}
+        >
+          <Text style={styles.coachLinkText}>Already have an account? Sign in →</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -77,6 +84,8 @@ const styles = StyleSheet.create({
   dot:         { width: 10, height: 10, borderRadius: 5, backgroundColor: "#ccc", marginHorizontal: 5 },
   dotActive:   { backgroundColor: "#008000" },
   btn:         { backgroundColor: "#008000", borderRadius: 12 },
+  coachLink:   { marginTop: 20, padding: 8 },
+  coachLinkText: { color: "#008000", fontSize: 14, textDecorationLine: "underline" },
 });
 
 export default onBoardScreen;

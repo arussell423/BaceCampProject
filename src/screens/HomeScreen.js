@@ -4,8 +4,9 @@ import {
   SafeAreaView, Image, StatusBar,
 } from 'react-native';
 import { Text, Icon, Avatar } from 'react-native-elements';
-import { auth } from '../components/Firebase';
+import { auth, db } from '../components/Firebase';
 import { signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 const NAV_ITEMS = [
   { label: 'Evaluation',   icon: 'clipboard-list',  type: 'material-community', screen: 'EvaluationScreen',    color: '#1B5E20', bg: '#E8F5E9' },
@@ -23,14 +24,20 @@ export class HomeScreen extends Component {
 
   componentDidMount() {
     const user = auth.currentUser;
-    const role = this.props.route?.params?.role ?? 'player';
-    if (user) {
+    if (!user) return;
+    // Read displayName from Firestore so profile edits are reflected immediately
+    getDoc(doc(db, 'users', user.uid)).then((snap) => {
+      const firestoreName = snap.exists() ? snap.data().displayName : null;
+      this.setState({
+        userEmail: user.email,
+        displayName: firestoreName || user.displayName || user.email?.split('@')[0] || 'Athlete',
+      });
+    }).catch(() => {
       this.setState({
         userEmail: user.email,
         displayName: user.displayName || user.email?.split('@')[0] || 'Athlete',
-        role,
       });
-    }
+    });
   }
 
   logout = () => { signOut(auth); };
@@ -106,7 +113,7 @@ export class HomeScreen extends Component {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F0F2F5' },
-  container: { paddingBottom: 40 },
+  container: { paddingBottom: 40, flexGrow: 1 },
   hero: {
     backgroundColor: '#006400', paddingTop: 24, paddingHorizontal: 20,
     paddingBottom: 28, borderBottomLeftRadius: 28, borderBottomRightRadius: 28,

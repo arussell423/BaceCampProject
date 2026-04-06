@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
   TextInput, ScrollView, Alert, ActivityIndicator,
@@ -97,13 +98,7 @@ export class CoachCalendarScreen extends Component {
 
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-            <Icon name="arrow-back" type="material" color="#008000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Schedule</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <AppHeader navigation={this.props.navigation} title="Calendar" homeScreen="CoachHomeScreen" />
 
         {loading ? (
           <ActivityIndicator size="large" color="#008000" style={{ marginTop: 60 }} />

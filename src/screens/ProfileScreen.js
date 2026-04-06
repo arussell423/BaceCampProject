@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
   TextInput, Alert, ScrollView, ActivityIndicator,
@@ -6,7 +7,7 @@ import {
 import { Text, Icon, Avatar } from 'react-native-elements';
 import { auth, db } from '../components/Firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { sendPasswordResetEmail, signOut } from 'firebase/auth';
+import { sendPasswordResetEmail, signOut, updateProfile } from 'firebase/auth';
 
 export class ProfileScreen extends Component {
   state = {
@@ -42,12 +43,42 @@ export class ProfileScreen extends Component {
     if (!user) return;
     this.setState({ saving: true });
     try {
-      await setDoc(doc(db, 'users', user.uid), { displayName: this.state.displayName }, { merge: true });
+      // Save to Firestore AND Firebase Auth profile so all screens see the update
+      await Promise.all([
+        setDoc(doc(db, 'users', user.uid), { displayName: this.state.displayName }, { merge: true }),
+        updateProfile(user, { displayName: this.state.displayName }),
+      ]);
       Alert.alert('Saved', 'Your profile has been updated.');
     } catch (e) {
       Alert.alert('Error', 'Could not save changes.');
     }
     this.setState({ saving: false });
+  };
+
+  switchRole = () => {
+    const { role } = this.state;
+    const newRole = role === 'coach' ? 'player' : 'coach';
+    const label = newRole === 'coach' ? 'Coach' : 'Player';
+    Alert.alert(
+      'Switch Role',
+      `Switch your account to ${label} mode? The app will reload to the ${label} interface.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: `Switch to ${label}`,
+          onPress: async () => {
+            const user = auth.currentUser;
+            if (!user) return;
+            try {
+              await setDoc(doc(db, 'users', user.uid), { role: newRole }, { merge: true });
+              // App.js onSnapshot will detect the role change and switch navigators
+            } catch (e) {
+              Alert.alert('Error', 'Could not switch role. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
   changePassword = () => {
@@ -68,13 +99,7 @@ export class ProfileScreen extends Component {
 
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-            <Icon name="arrow-back" type="material" color="#008000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <AppHeader navigation={this.props.navigation} title="Profile" homeScreen="HomeScreen" />
 
         {loading ? (
           <ActivityIndicator size="large" color="#008000" style={{ marginTop: 60 }} />
@@ -123,6 +148,19 @@ export class ProfileScreen extends Component {
 
             <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={this.changePassword}>
               <Text style={styles.btnOutlineText}>Change Password</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.btn, styles.btnSwitch]} onPress={this.switchRole}>
+              <Icon
+                name={role === 'coach' ? 'person' : 'people'}
+                type="material"
+                size={16}
+                color="#0D47A1"
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.btnSwitchText}>
+                Switch to {role === 'coach' ? 'Player' : 'Coach'} Mode
+              </Text>
             </TouchableOpacity>
 
             {/* Linked Apps */}
@@ -176,6 +214,8 @@ const styles = StyleSheet.create({
     borderRadius: 12, paddingVertical: 14, alignItems: 'center',
     marginBottom: 12, elevation: 1,
   },
+  btnSwitch: { backgroundColor: '#E3F2FD', borderWidth: 1.5, borderColor: '#0D47A1', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  btnSwitchText: { color: '#0D47A1', fontWeight: 'bold', fontSize: 15 },
   btnGreen: { backgroundColor: '#008000' },
   btnRed: { backgroundColor: '#D32F2F' },
   btnOutline: { borderWidth: 2, borderColor: '#008000', backgroundColor: 'white' },

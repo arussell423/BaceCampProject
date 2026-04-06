@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
 } from 'react-native';
@@ -84,15 +85,7 @@ export class DashboardScreen extends Component {
 
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.headerBar}>
-          <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-            <Icon name="arrow-back" type="material" color="#008000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Dashboard</Text>
-          <TouchableOpacity onPress={this.loadData}>
-            <Icon name="refresh" type="material" color="#008000" />
-          </TouchableOpacity>
-        </View>
+        <AppHeader navigation={this.props.navigation} title="Dashboard" homeScreen="HomeScreen" />
 
         <ScrollView contentContainerStyle={styles.container}>
           {loading ? (
