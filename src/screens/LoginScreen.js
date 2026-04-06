@@ -16,20 +16,17 @@ import * as Yup from 'yup';
 export class LoginScreen extends Component {
 
 
-    Login = (values, navigation) => {
+    Login = (values) => {
         firebase
           .auth()
           .signInWithEmailAndPassword(values.email, values.password)
           .then(response => {
             let {user} = response;
             this.setState({user});
-            alert('Registration success');
-            setTimeout(() => {
-              navigation.navigate('HomeScreen');
-            }, 2000);
+            this.props.navigation.navigate('HomeScreen');
           })
           .catch(err => {
-            alert(err);
+            alert(err.message);
           });
       };
     
@@ -50,7 +47,7 @@ export class LoginScreen extends Component {
 <Formik
          initialValues={{email: '', password: ''}}
          onSubmit={(values, {setSubmitting}) => {
-           this.Login(values, this.props.navigation);
+           this.Login(values);
            setSubmitting(false);
          }}
          validationSchema={LoginSchema}>

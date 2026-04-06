@@ -28,16 +28,20 @@ export class PasswordInputScreen extends Component {
 
     onChange = password => this.setState({ password });
     
-    signUp = (values,navigation) => {
+    signUp = (values) => {
         this.setState({loading: true});
         let email = this.props.navigation.getParam('email');
         firebase
           .auth()
           .createUserWithEmailAndPassword(email, values.password)
           .then(user => {
-            this.setState({user});
-            alert('Registration success');
+            this.setState({ user, loading: false });
+            this.props.navigation.navigate('TouchAuthentication');
           })
+          .catch(err => {
+            this.setState({ loading: false });
+            alert(err.message);
+          });
       };
     
 
@@ -146,9 +150,7 @@ export class PasswordInputScreen extends Component {
               }}
               titleStyle={{fontWeight: 'bold', fontSize: 23}}
               containerStyle={{marginVertical: 10, height: 50, width: 300}}
-              onPress={() =>
-                this.signUp()
-              }
+              onPress={formikProps.handleSubmit}
               
               underlayColor="transparent"
             />
