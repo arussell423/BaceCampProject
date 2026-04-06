@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { Text, Icon, Button } from 'react-native-elements';
 
+import firebase from 'firebase';
+
 const CATEGORIES = ['Strength', 'Power', 'Speed', 'Footwork', 'Flexibility'];
 
 const WORKOUTS = {
@@ -114,10 +116,29 @@ const cardStyles = StyleSheet.create({
 
 export class TrainingScreen extends Component {
   static navigationOptions = { headerShown: false };
-  state = { activeCategory: 'Strength' };
+  state = { activeCategory: 'Strength', coachWorkouts: [], loadingCoach: false };
+
+  componentDidMount() {
+    this.loadCoachWorkouts();
+  }
+
+  loadCoachWorkouts = async () => {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+    this.setState({ loadingCoach: true });
+    try {
+      const snap = await firebase.firestore()
+        .collection('coachTraining').doc(user.uid).collection('sessions')
+        .orderBy('timestamp', 'desc').limit(10).get();
+      const coachWorkouts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      this.setState({ coachWorkouts, loadingCoach: false });
+    } catch (e) {
+      this.setState({ loadingCoach: false });
+    }
+  };
 
   render() {
-    const { activeCategory } = this.state;
+    const { activeCategory, coachWorkouts, loadingCoach } = this.state;
     const workouts = WORKOUTS[activeCategory] || [];
 
     return (
@@ -144,6 +165,27 @@ export class TrainingScreen extends Component {
         </ScrollView>
 
         <ScrollView contentContainerStyle={styles.container}>
+          {/* Coach-assigned section */}
+          {coachWorkouts.length > 0 && (
+            <View style={styles.coachSection}>
+              <Text style={styles.coachSectionTitle}>📋 Coach Assigned</Text>
+              {coachWorkouts.map((cw) => (
+                <View key={cw.id} style={styles.coachCard}>
+                  <View style={styles.coachCardHeader}>
+                    <Text style={styles.coachCardTitle}>{cw.title}</Text>
+                    {cw.category ? (
+                      <View style={styles.coachCatBadge}>
+                        <Text style={styles.coachCatText}>{cw.category}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  {cw.description ? <Text style={styles.coachCardDesc}>{cw.description}</Text> : null}
+                  {cw.videoUrl ? <Text style={styles.coachCardVideo}>🎥 {cw.videoUrl}</Text> : null}
+                </View>
+              ))}
+            </View>
+          )}
+
           <Text style={styles.sectionTitle}>{activeCategory} Workouts</Text>
           {workouts.map((w) => <WorkoutCard key={w.id} workout={w} />)}
         </ScrollView>
@@ -163,6 +205,18 @@ const styles = StyleSheet.create({
   catLabelActive: { color: 'white', fontWeight: 'bold' },
   container: { padding: 16, paddingBottom: 40 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#222', marginBottom: 14 },
+  coachSection: { marginBottom: 20 },
+  coachSectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#9C27B0', marginBottom: 12 },
+  coachCard: {
+    backgroundColor: '#f3e5f5', borderRadius: 14, padding: 14, marginBottom: 10,
+    borderLeftWidth: 4, borderLeftColor: '#9C27B0',
+  },
+  coachCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  coachCardTitle: { fontSize: 14, fontWeight: '700', color: '#4A148C', flex: 1 },
+  coachCatBadge: { backgroundColor: '#9C27B0', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  coachCatText: { color: 'white', fontSize: 11, fontWeight: '600' },
+  coachCardDesc: { fontSize: 13, color: '#555', lineHeight: 19 },
+  coachCardVideo: { fontSize: 12, color: '#2196F3', marginTop: 6 },
 });
 
 export default TrainingScreen;

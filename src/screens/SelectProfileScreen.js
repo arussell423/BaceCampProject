@@ -1,15 +1,31 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Text, Icon, Image } from 'react-native-elements';
+import firebase from 'firebase';
 
 export class SelectProfileScreen extends Component {
   static navigationOptions = { headerShown: false };
 
-  selectRole = (role) => {
-    this.props.navigation.navigate('HomeScreen', { role });
+  state = { saving: false };
+
+  selectRole = async (role) => {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+    this.setState({ saving: true });
+    try {
+      await firebase.firestore().collection('users').doc(user.uid).set(
+        { role, email: user.email },
+        { merge: true }
+      );
+      // App.js Firestore listener will detect role change and render correct navigator
+    } catch (e) {
+      Alert.alert('Error', 'Could not save profile. Please try again.');
+      this.setState({ saving: false });
+    }
   };
 
   render() {
+    const { saving } = this.state;
     return (
       <View style={styles.container}>
         <Image
@@ -19,19 +35,23 @@ export class SelectProfileScreen extends Component {
         <Text h4 style={styles.title}>Who are you?</Text>
         <Text style={styles.subtitle}>Select your profile type to get started</Text>
 
-        <View style={styles.cardsRow}>
-          <TouchableOpacity style={styles.card} onPress={() => this.selectRole('player')}>
-            <Icon name="person" type="material" size={60} color="#008000" />
-            <Text h4 style={styles.cardTitle}>Player</Text>
-            <Text style={styles.cardDesc}>Track your performance, training and wellness</Text>
-          </TouchableOpacity>
+        {saving ? (
+          <ActivityIndicator size="large" color="#008000" style={{ marginTop: 20 }} />
+        ) : (
+          <View style={styles.cardsRow}>
+            <TouchableOpacity style={styles.card} onPress={() => this.selectRole('player')}>
+              <Icon name="person" type="material" size={60} color="#008000" />
+              <Text h4 style={styles.cardTitle}>Player</Text>
+              <Text style={styles.cardDesc}>Track your performance, training and wellness</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity style={styles.card} onPress={() => this.selectRole('coach')}>
-            <Icon name="people" type="material" size={60} color="#008000" />
-            <Text h4 style={styles.cardTitle}>Coach</Text>
-            <Text style={styles.cardDesc}>Manage your players, send feedback and training</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity style={styles.card} onPress={() => this.selectRole('coach')}>
+              <Icon name="people" type="material" size={60} color="#008000" />
+              <Text h4 style={styles.cardTitle}>Coach</Text>
+              <Text style={styles.cardDesc}>Manage your players, send feedback and training</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   }

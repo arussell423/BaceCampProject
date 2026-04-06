@@ -4,6 +4,8 @@ import { Text, Icon, Avatar } from 'react-native-elements';
 import firebase from 'firebase';
 
 const NAV_ITEMS = [
+  { label: 'AI Coach 🤖', icon: 'psychology', screen: 'AICoachScreen', color: '#9C27B0' },
+  { label: 'Speed Drills ⚡', icon: 'speed', screen: 'SpeedTrackingScreen', color: '#F44336' },
   { label: 'Evaluation', icon: 'assignment', screen: 'EvaluationScreen', color: '#4CAF50' },
   { label: 'Training', icon: 'fitness-center', screen: 'TrainingScreen', color: '#2196F3' },
   { label: 'Schedule', icon: 'event', screen: 'ScheduleScreen', color: '#FF9800' },
@@ -40,11 +42,14 @@ export class HomeScreen extends Component {
             <View>
               <Text style={styles.greeting}>Welcome back 👋</Text>
               <Text style={styles.email}>{userEmail}</Text>
+              <TouchableOpacity onPress={this.logout}>
+                <Text style={styles.logoutLink}>Log out</Text>
+              </TouchableOpacity>
               <View style={styles.roleBadge}>
                 <Text style={styles.roleText}>{role === 'coach' ? '🧑‍🏫 Coach' : '🎾 Player'}</Text>
               </View>
             </View>
-            <TouchableOpacity onPress={this.logout}>
+            <TouchableOpacity onPress={() => this.props.navigation.navigate('ProfileScreen')}>
               <Avatar
                 rounded
                 title={initials}
@@ -94,6 +99,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   greeting: { fontSize: 22, fontWeight: 'bold', color: '#222' },
   email: { color: 'grey', fontSize: 13, marginTop: 2 },
+  logoutLink: { color: '#D32F2F', fontSize: 12, marginTop: 3 },
   roleBadge: { backgroundColor: '#e8f5e9', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginTop: 4, alignSelf: 'flex-start' },
   roleText: { color: '#008000', fontWeight: 'bold', fontSize: 12 },
   banner: { backgroundColor: '#008000', borderRadius: 16, padding: 24, marginBottom: 24, alignItems: 'center' },
