@@ -8,7 +8,7 @@ import { Text, Icon } from 'react-native-elements';
  * - Title (centre)
  * - Logo (right) → navigate to homeScreen (default 'HomeScreen')
  */
-export function AppHeader({ navigation, title, homeScreen = 'HomeScreen' }) {
+export function AppHeader({ navigation, title }) {
   const canGoBack = navigation.canGoBack();
   return (
     <View style={styles.bar}>
@@ -22,8 +22,9 @@ export function AppHeader({ navigation, title, homeScreen = 'HomeScreen' }) {
 
       <Text style={styles.title}>{title}</Text>
 
+      {/* Logo taps → go to the root screen of the current stack */}
       <TouchableOpacity
-        onPress={() => navigation.navigate(homeScreen)}
+        onPress={() => navigation.popToTop()}
         style={styles.side}
         activeOpacity={0.7}
       >

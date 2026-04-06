@@ -38,8 +38,11 @@ const Stack = createStackNavigator();
 const screenOptions = { headerShown: false };
 
 export function RootNavigator({ user, role }) {
+  // Changing the key forces NavigationContainer to fully remount when
+  // role changes — this ensures the correct initial screen is shown
+  const navKey = `${user?.uid || 'guest'}-${role || 'none'}`;
   return (
-    <NavigationContainer>
+    <NavigationContainer key={navKey}>
       <Stack.Navigator screenOptions={screenOptions}>
         {!user ? (
           // ── Auth flow ────────────────────────────────────────────────
