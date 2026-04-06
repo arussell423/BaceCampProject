@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {
   View,
   StyleSheet,
+  Platform,
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';

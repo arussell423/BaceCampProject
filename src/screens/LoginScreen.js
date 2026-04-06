@@ -2,6 +2,8 @@ import React, {Component} from 'react';
 import {
 View,
 StyleSheet,
+Platform,
+Alert,
 ActivityIndicator,
 TouchableOpacity,
 KeyboardAvoidingView,
@@ -19,10 +21,8 @@ export class LoginScreen extends Component {
 
     Login = (values) => {
         signInWithEmailAndPassword(auth, values.email, values.password)
-          .then(response => {
-            let {user} = response;
-            this.setState({user});
-            this.props.navigation.navigate('HomeScreen');
+          .then(() => {
+            // onAuthStateChanged in App.js handles routing automatically
           })
           .catch(err => {
             alert(err.message);
@@ -130,7 +130,7 @@ export class LoginScreen extends Component {
                />
                <TouchableOpacity
                  onPress={() =>
-                   this.props.navigation.navigate('ForgotPasswordScreen')
+                   Alert.alert('Forgot Password', 'Please re-register or contact support.')
                  }>
                  <Text h5 style={{textAlign: 'center', color: 'blue'}}>
                    Forgot Password?

@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {
   View,
   StyleSheet,
+  Platform,
   ActivityIndicator,
   TouchableOpacity,
   KeyboardAvoidingView,
