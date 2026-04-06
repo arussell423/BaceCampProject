@@ -8,7 +8,8 @@ KeyboardAvoidingView,
 ScrollView,
 } from 'react-native';
 import { Text, Icon, Input, Button, SocialIcon, Image } from 'react-native-elements';
-import firebase from 'firebase'
+import { auth } from '../components/Firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
 
@@ -17,9 +18,7 @@ export class LoginScreen extends Component {
 
 
     Login = (values) => {
-        firebase
-          .auth()
-          .signInWithEmailAndPassword(values.email, values.password)
+        signInWithEmailAndPassword(auth, values.email, values.password)
           .then(response => {
             let {user} = response;
             this.setState({user});
@@ -29,10 +28,6 @@ export class LoginScreen extends Component {
             alert(err.message);
           });
       };
-    
-    static navigationOptions = {
-        headerShown: false,
-    };
     
     render() {
         return (

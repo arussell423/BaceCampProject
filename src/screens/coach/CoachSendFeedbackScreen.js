@@ -4,13 +4,12 @@ import {
   TextInput, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../../components/Firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const FEEDBACK_TYPES = ['Text', 'Photo', 'Video'];
 
 export class CoachSendFeedbackScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     feedbackType: 'Text',
     message: '',
@@ -20,16 +19,16 @@ export class CoachSendFeedbackScreen extends Component {
   };
 
   get playerUid() {
-    return this.props.navigation.getParam('playerUid', '');
+    return this.props.route?.params?.playerUid ?? '';
   }
 
   get playerEmail() {
-    return this.props.navigation.getParam('playerEmail', '');
+    return this.props.route?.params?.playerEmail ?? '';
   }
 
   sendFeedback = async () => {
     const { feedbackType, message, videoUrl } = this.state;
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     const content = feedbackType === 'Video' ? videoUrl : message;
     if (!content.trim()) {
@@ -38,17 +37,13 @@ export class CoachSendFeedbackScreen extends Component {
     }
     this.setState({ sending: true });
     try {
-      await firebase.firestore()
-        .collection('coachFeedback')
-        .doc(this.playerUid)
-        .collection('messages')
-        .add({
-          fromCoachUid: user.uid,
-          type: feedbackType.toLowerCase(),
-          content,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          read: false,
-        });
+      await addDoc(collection(db, 'coachFeedback', this.playerUid, 'messages'), {
+        fromCoachUid: user.uid,
+        type: feedbackType.toLowerCase(),
+        content,
+        timestamp: serverTimestamp(),
+        read: false,
+      });
       this.setState({ sent: true, sending: false });
     } catch (e) {
       Alert.alert('Error', 'Could not send feedback.');

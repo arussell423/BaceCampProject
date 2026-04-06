@@ -4,13 +4,12 @@ import {
   TextInput, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../../components/Firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const CATEGORIES = ['Speed', 'Strength', 'Power', 'Mobility', 'Flexibility'];
 
 export class CoachAddTrainingScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     title: '',
     category: 'Speed',
@@ -21,11 +20,11 @@ export class CoachAddTrainingScreen extends Component {
   };
 
   get playerUid() {
-    return this.props.navigation.getParam('playerUid', '');
+    return this.props.route?.params?.playerUid ?? '';
   }
 
   get playerEmail() {
-    return this.props.navigation.getParam('playerEmail', '');
+    return this.props.route?.params?.playerEmail ?? '';
   }
 
   addTraining = async () => {
@@ -34,22 +33,18 @@ export class CoachAddTrainingScreen extends Component {
       Alert.alert('Missing Title', 'Please enter a training title.');
       return;
     }
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     this.setState({ saving: true });
     try {
-      await firebase.firestore()
-        .collection('coachTraining')
-        .doc(this.playerUid)
-        .collection('sessions')
-        .add({
-          title: title.trim(),
-          category,
-          description: description.trim(),
-          videoUrl: videoUrl.trim(),
-          coachUid: user.uid,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+      await addDoc(collection(db, 'coachTraining', this.playerUid, 'sessions'), {
+        title: title.trim(),
+        category,
+        description: description.trim(),
+        videoUrl: videoUrl.trim(),
+        coachUid: user.uid,
+        timestamp: serverTimestamp(),
+      });
       Alert.alert('Success', 'Training added for player!');
       this.setState({ title: '', description: '', videoUrl: '', saving: false, saved: true });
       setTimeout(() => this.setState({ saved: false }), 3000);

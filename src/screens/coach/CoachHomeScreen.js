@@ -4,7 +4,8 @@ import {
   ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { Text, Icon, Avatar } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../../components/Firebase';
+import { doc, getDoc, collection, getDocs, query, where, limit } from 'firebase/firestore';
 
 const NAV_CARDS = [
   { label: 'My Players', icon: 'people', screen: 'CoachRosterScreen', color: '#4CAF50' },
@@ -16,8 +17,6 @@ const NAV_CARDS = [
 ];
 
 export class CoachHomeScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     coachName: '',
     playerCount: 0,
@@ -30,15 +29,15 @@ export class CoachHomeScreen extends Component {
   }
 
   loadCoachData = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
       const [userDoc, rosterSnap] = await Promise.all([
-        firebase.firestore().collection('users').doc(user.uid).get(),
-        firebase.firestore().collection('playerRosters').doc(user.uid).collection('players').get(),
+        getDoc(doc(db, 'users', user.uid)),
+        getDocs(collection(db, 'playerRosters', user.uid, 'players')),
       ]);
 
-      const coachName = userDoc.exists
+      const coachName = userDoc.exists()
         ? (userDoc.data().displayName || userDoc.data().email || user.email)
         : user.email;
 
@@ -49,13 +48,7 @@ export class CoachHomeScreen extends Component {
       let newEvalCount = 0;
       for (const playerDoc of rosterSnap.docs) {
         try {
-          const evalSnap = await firebase.firestore()
-            .collection('evaluations')
-            .doc(playerDoc.id)
-            .collection('sessions')
-            .where('timestamp', '>=', cutoff)
-            .limit(1)
-            .get();
+          const evalSnap = await getDocs(query(collection(db, 'evaluations', playerDoc.id, 'sessions'), where('timestamp', '>=', cutoff), limit(1)));
           if (!evalSnap.empty) newEvalCount++;
         } catch (e) {
           // ignore per-player errors

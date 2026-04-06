@@ -4,7 +4,8 @@ import {
   ScrollView, TextInput, Alert, Modal, ActivityIndicator,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../../components/Firebase';
+import { collection, getDocs, doc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 
 function evalDotColor(lastEvalDate) {
   if (!lastEvalDate) return '#F44336';
@@ -15,8 +16,6 @@ function evalDotColor(lastEvalDate) {
 }
 
 export class CoachRosterScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     players: [],
     pendingInvites: [],
@@ -30,14 +29,10 @@ export class CoachRosterScreen extends Component {
   }
 
   loadRoster = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      const snap = await firebase.firestore()
-        .collection('playerRosters')
-        .doc(user.uid)
-        .collection('players')
-        .get();
+      const snap = await getDocs(collection(db, 'playerRosters', user.uid, 'players'));
 
       const players = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       const pendingInvites = players.filter((p) => p.invited);
@@ -52,26 +47,24 @@ export class CoachRosterScreen extends Component {
   sendInvite = async () => {
     const { inviteEmail } = this.state;
     if (!inviteEmail.trim()) return;
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
 
     const sanitizedEmail = inviteEmail.trim().replace(/[.#$[\]]/g, '_');
     try {
-      const batch = firebase.firestore().batch();
-      const linkRef = firebase.firestore().collection('linkRequests').doc(String(Date.now()));
+      const batch = writeBatch(db);
+      const linkRef = doc(collection(db, 'linkRequests'), String(Date.now()));
       batch.set(linkRef, {
         coachUid: user.uid,
         playerEmail: inviteEmail.trim(),
         status: 'pending',
       });
-      const rosterRef = firebase.firestore()
-        .collection('playerRosters').doc(user.uid)
-        .collection('players').doc(sanitizedEmail);
+      const rosterRef = doc(db, 'playerRosters', user.uid, 'players', sanitizedEmail);
       batch.set(rosterRef, {
         email: inviteEmail.trim(),
         name: inviteEmail.trim(),
         invited: true,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        timestamp: serverTimestamp(),
       });
       await batch.commit();
       this.setState({ showInviteModal: false, inviteEmail: '' });
@@ -92,13 +85,10 @@ export class CoachRosterScreen extends Component {
           text: 'Remove',
           style: 'destructive',
           onPress: async () => {
-            const user = firebase.auth().currentUser;
+            const user = auth.currentUser;
             if (!user) return;
             try {
-              await firebase.firestore()
-                .collection('playerRosters').doc(user.uid)
-                .collection('players').doc(player.id)
-                .delete();
+              await deleteDoc(doc(db, 'playerRosters', user.uid, 'players', player.id));
               this.loadRoster();
             } catch (e) {
               Alert.alert('Error', 'Could not remove player.');

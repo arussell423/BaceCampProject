@@ -4,11 +4,10 @@ import {
   TouchableOpacity, TextInput, Alert,
 } from 'react-native';
 import { Text, Icon, Button } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../components/Firebase';
+import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export class MatchReportScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     opponent: '',
     venue: '',
@@ -28,15 +27,10 @@ export class MatchReportScreen extends Component {
   }
 
   loadPastReports = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      const snap = await firebase.firestore()
-        .collection('matchReports').doc(user.uid)
-        .collection('reports')
-        .orderBy('timestamp', 'desc')
-        .limit(10)
-        .get();
+      const snap = await getDocs(query(collection(db, 'matchReports', user.uid, 'reports'), orderBy('timestamp', 'desc'), limit(10)));
       const pastReports = [];
       snap.forEach((doc) => pastReports.push({ id: doc.id, ...doc.data() }));
       this.setState({ pastReports });
@@ -48,23 +42,20 @@ export class MatchReportScreen extends Component {
     if (!opponent.trim()) { Alert.alert('Opponent name required'); return; }
     if (!result) { Alert.alert('Please select a result (Win / Loss / Draw)'); return; }
 
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     this.setState({ loading: true });
 
     try {
-      await firebase.firestore()
-        .collection('matchReports').doc(user.uid)
-        .collection('reports')
-        .add({
-          opponent: opponent.trim(),
-          myScore: myScore.trim(),
-          oppScore: oppScore.trim(),
-          result,
-          notes: notes.trim(),
-          gamePlan: gamePlan.trim(),
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+      await addDoc(collection(db, 'matchReports', user.uid, 'reports'), {
+        opponent: opponent.trim(),
+        myScore: myScore.trim(),
+        oppScore: oppScore.trim(),
+        result,
+        notes: notes.trim(),
+        gamePlan: gamePlan.trim(),
+        timestamp: serverTimestamp(),
+      });
       this.setState({
         loading: false, saved: true,
         opponent: '', myScore: '', oppScore: '', result: null, notes: '', gamePlan: '',

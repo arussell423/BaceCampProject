@@ -4,7 +4,8 @@ import {
   ScrollView, Alert, FlatList,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../components/Firebase';
+import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const DRILLS = ['5m Sprint', '10m Sprint', '20m Shuttle', 'T-Drill', 'Cone Drill'];
 
@@ -17,8 +18,6 @@ function formatTime(ms) {
 }
 
 export class SpeedTrackingScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     running: false,
     timeMs: 0,
@@ -66,19 +65,15 @@ export class SpeedTrackingScreen extends Component {
   };
 
   saveResult = async (timeMs, displayTime) => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      await firebase.firestore()
-        .collection('speedDrills')
-        .doc(user.uid)
-        .collection('results')
-        .add({
-          drillName: this.state.selectedDrill,
-          timeMs,
-          displayTime,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+      await addDoc(collection(db, 'speedDrills', user.uid, 'results'), {
+        drillName: this.state.selectedDrill,
+        timeMs,
+        displayTime,
+        timestamp: serverTimestamp(),
+      });
       this.reset();
       this.loadHistory();
     } catch (e) {
@@ -88,17 +83,15 @@ export class SpeedTrackingScreen extends Component {
   };
 
   loadHistory = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      const snap = await firebase.firestore()
-        .collection('speedDrills')
-        .doc(user.uid)
-        .collection('results')
-        .where('drillName', '==', this.state.selectedDrill)
-        .orderBy('timestamp', 'desc')
-        .limit(10)
-        .get();
+      const snap = await getDocs(query(
+        collection(db, 'speedDrills', user.uid, 'results'),
+        where('drillName', '==', this.state.selectedDrill),
+        orderBy('timestamp', 'desc'),
+        limit(10)
+      ));
       const history = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       // Compute personal bests
       const { personalBests } = this.state;

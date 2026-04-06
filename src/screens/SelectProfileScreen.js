@@ -1,22 +1,18 @@
 import React, { Component } from 'react';
 import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Text, Icon, Image } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../components/Firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 export class SelectProfileScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = { saving: false };
 
   selectRole = async (role) => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     this.setState({ saving: true });
     try {
-      await firebase.firestore().collection('users').doc(user.uid).set(
-        { role, email: user.email },
-        { merge: true }
-      );
+      await setDoc(doc(db, 'users', user.uid), { role, email: user.email }, { merge: true });
       // App.js Firestore listener will detect role change and render correct navigator
     } catch (e) {
       Alert.alert('Error', 'Could not save profile. Please try again.');

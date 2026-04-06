@@ -13,9 +13,6 @@ import * as Yup from 'yup';
 
 
 export class EmailInputScreen extends Component {
-  static navigationOptions = {
-    headerShown: false,
-  };
   render() {
     return (
   

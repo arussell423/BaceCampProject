@@ -4,7 +4,8 @@ import {
   ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import firebase from 'firebase';
+import { db } from '../../components/Firebase';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
 const TABS = ['Performance', 'Training', 'History'];
 
@@ -19,8 +20,6 @@ const MetricBar = ({ label, score, colour }) => (
 );
 
 export class CoachPlayerDetailScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     activeTab: 0,
     evaluations: [],
@@ -34,11 +33,11 @@ export class CoachPlayerDetailScreen extends Component {
   }
 
   get playerUid() {
-    return this.props.navigation.getParam('playerUid', '');
+    return this.props.route?.params?.playerUid ?? '';
   }
 
   get playerEmail() {
-    return this.props.navigation.getParam('playerEmail', '');
+    return this.props.route?.params?.playerEmail ?? '';
   }
 
   loadData = async () => {
@@ -46,12 +45,8 @@ export class CoachPlayerDetailScreen extends Component {
     if (!playerUid) return;
     try {
       const [evalSnap, trainingSnap] = await Promise.all([
-        firebase.firestore()
-          .collection('evaluations').doc(playerUid).collection('sessions')
-          .orderBy('timestamp', 'desc').limit(10).get(),
-        firebase.firestore()
-          .collection('coachTraining').doc(playerUid).collection('sessions')
-          .orderBy('timestamp', 'desc').limit(10).get(),
+        getDocs(query(collection(db, 'evaluations', playerUid, 'sessions'), orderBy('timestamp', 'desc'), limit(10))),
+        getDocs(query(collection(db, 'coachTraining', playerUid, 'sessions'), orderBy('timestamp', 'desc'), limit(10))),
       ]);
 
       const evaluations = evalSnap.docs.map((d) => ({ id: d.id, ...d.data() }));

@@ -4,11 +4,10 @@ import {
   TextInput, ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../../components/Firebase';
+import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export class CoachCalendarScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     players: [],
     selectedPlayerUid: null,
@@ -27,11 +26,10 @@ export class CoachCalendarScreen extends Component {
   }
 
   loadPlayers = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      const snap = await firebase.firestore()
-        .collection('playerRosters').doc(user.uid).collection('players').get();
+      const snap = await getDocs(collection(db, 'playerRosters', user.uid, 'players'));
       const players = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       this.setState({ players, loading: false });
     } catch (e) {
@@ -49,9 +47,7 @@ export class CoachCalendarScreen extends Component {
 
   loadEvents = async (playerUid) => {
     try {
-      const snap = await firebase.firestore()
-        .collection('schedules').doc(playerUid).collection('events')
-        .orderBy('date', 'desc').limit(20).get();
+      const snap = await getDocs(query(collection(db, 'schedules', playerUid, 'events'), orderBy('date', 'desc'), limit(20)));
       const events = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       this.setState({ events });
     } catch (e) {
@@ -75,14 +71,12 @@ export class CoachCalendarScreen extends Component {
     }
     this.setState({ addingEvent: true });
     try {
-      await firebase.firestore()
-        .collection('schedules').doc(selectedPlayerUid).collection('events')
-        .add({
-          date: selectedDate.trim(),
-          title: newEventTitle.trim(),
-          type: newEventType,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        });
+      await addDoc(collection(db, 'schedules', selectedPlayerUid, 'events'), {
+        date: selectedDate.trim(),
+        title: newEventTitle.trim(),
+        type: newEventType,
+        timestamp: serverTimestamp(),
+      });
       this.setState({ newEventTitle: '', addingEvent: false });
       Alert.alert('Added', 'Event added to player schedule.');
       this.loadEvents(selectedPlayerUid);

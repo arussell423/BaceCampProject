@@ -8,20 +8,15 @@ import {
   ScrollView,
 } from 'react-native';
 
-import PasswordStrengthMeterBar from 'react-native-password-strength-meter-bar';
 import { Text, Icon, Input, Button, SocialIcon, Image } from 'react-native-elements';
-
-import firebase from 'firebase';
+import { auth } from '../components/Firebase';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
 
  
 
 export class PasswordInputScreen extends Component {
-  static navigationOptions = {
-    headerTransparent: true,
-    headerTitle: '',
-  };
   state = {
     password: '',
   };
@@ -30,10 +25,8 @@ export class PasswordInputScreen extends Component {
     
     signUp = (values) => {
         this.setState({loading: true});
-        let email = this.props.navigation.getParam('email');
-        firebase
-          .auth()
-          .createUserWithEmailAndPassword(email, values.password)
+        let email = this.props.route?.params?.email;
+        createUserWithEmailAndPassword(auth, email, values.password)
           .then(user => {
             this.setState({ user, loading: false });
             this.props.navigation.navigate('TouchAuthentication');
@@ -136,8 +129,6 @@ export class PasswordInputScreen extends Component {
           {formikProps.errors.passwordConfirm}
         </Text>
       ) : null}
-            <PasswordStrengthMeterBar password={formikProps.values.password} />
-                
           <View style={styles.btnWrapper}>
             <TouchableOpacity>
                                 <Button

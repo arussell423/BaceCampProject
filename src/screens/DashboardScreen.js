@@ -3,7 +3,8 @@ import {
   View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../components/Firebase';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
 const PERF_CATEGORIES = ['Speed', 'Strength', 'Power'];
 const WELLNESS_CATEGORIES = ['Attitude', 'Effort', 'Nerves'];
@@ -19,8 +20,6 @@ const MetricBar = ({ label, score, colour }) => (
 );
 
 export class DashboardScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     loading: true,
     performance: { Speed: 0, Strength: 0, Power: 0 },
@@ -35,16 +34,10 @@ export class DashboardScreen extends Component {
   }
 
   loadData = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      const snap = await firebase.firestore()
-        .collection('evaluations')
-        .doc(user.uid)
-        .collection('sessions')
-        .orderBy('timestamp', 'desc')
-        .limit(20)
-        .get();
+      const snap = await getDocs(query(collection(db, 'evaluations', user.uid, 'sessions'), orderBy('timestamp', 'desc'), limit(20)));
 
       let latestPhysical = null;
       let latestTactical = null;

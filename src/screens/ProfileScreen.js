@@ -4,11 +4,11 @@ import {
   TextInput, Alert, ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Text, Icon, Avatar } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../components/Firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { sendPasswordResetEmail, signOut } from 'firebase/auth';
 
 export class ProfileScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     displayName: '',
     email: '',
@@ -18,13 +18,13 @@ export class ProfileScreen extends Component {
   };
 
   componentDidMount() {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     this.setState({ email: user.email, displayName: user.displayName || '' });
-    firebase.firestore().collection('users').doc(user.uid).get()
-      .then((doc) => {
-        if (doc.exists) {
-          const data = doc.data();
+    getDoc(doc(db, 'users', user.uid))
+      .then((snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
           this.setState({
             displayName: data.displayName || user.displayName || '',
             role: data.role || 'player',
@@ -38,14 +38,11 @@ export class ProfileScreen extends Component {
   }
 
   saveChanges = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     this.setState({ saving: true });
     try {
-      await firebase.firestore().collection('users').doc(user.uid).set(
-        { displayName: this.state.displayName },
-        { merge: true }
-      );
+      await setDoc(doc(db, 'users', user.uid), { displayName: this.state.displayName }, { merge: true });
       Alert.alert('Saved', 'Your profile has been updated.');
     } catch (e) {
       Alert.alert('Error', 'Could not save changes.');
@@ -54,15 +51,15 @@ export class ProfileScreen extends Component {
   };
 
   changePassword = () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
-    firebase.auth().sendPasswordResetEmail(user.email)
+    sendPasswordResetEmail(auth, user.email)
       .then(() => Alert.alert('Email Sent', 'Password reset email sent!'))
       .catch(() => Alert.alert('Error', 'Could not send reset email.'));
   };
 
   logout = () => {
-    firebase.auth().signOut().catch(() => {});
+    signOut(auth).catch(() => {});
   };
 
   render() {

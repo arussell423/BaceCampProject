@@ -4,7 +4,8 @@ import {
   TouchableOpacity, Modal, TextInput, Alert,
 } from 'react-native';
 import { Text, Icon, Button } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../components/Firebase';
+import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const EVENT_TYPES = [
@@ -21,8 +22,6 @@ function getFirstDayOfMonth(year, month) {
 }
 
 export class ScheduleScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     today: new Date(),
     currentMonth: new Date().getMonth(),
@@ -40,14 +39,10 @@ export class ScheduleScreen extends Component {
   }
 
   loadEvents = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      const snap = await firebase.firestore()
-        .collection('schedules')
-        .doc(user.uid)
-        .collection('events')
-        .get();
+      const snap = await getDocs(collection(db, 'schedules', user.uid, 'events'));
       const events = {};
       snap.forEach((doc) => {
         const d = doc.data();
@@ -64,14 +59,11 @@ export class ScheduleScreen extends Component {
       Alert.alert('Enter a title', 'Please enter an event title.');
       return;
     }
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     this.setState({ loading: true });
     try {
-      const ref = await firebase.firestore()
-        .collection('schedules').doc(user.uid)
-        .collection('events')
-        .add({ date: selectedDate, title: newEventTitle.trim(), type: newEventType });
+      const ref = await addDoc(collection(db, 'schedules', user.uid, 'events'), { date: selectedDate, title: newEventTitle.trim(), type: newEventType });
       const updated = { ...events };
       if (!updated[selectedDate]) updated[selectedDate] = [];
       updated[selectedDate].push({ id: ref.id, title: newEventTitle.trim(), type: newEventType });
@@ -83,12 +75,10 @@ export class ScheduleScreen extends Component {
   };
 
   deleteEvent = async (date, eventId) => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      await firebase.firestore()
-        .collection('schedules').doc(user.uid)
-        .collection('events').doc(eventId).delete();
+      await deleteDoc(doc(db, 'schedules', user.uid, 'events', eventId));
       const updated = { ...this.state.events };
       updated[date] = updated[date].filter((e) => e.id !== eventId);
       if (updated[date].length === 0) delete updated[date];

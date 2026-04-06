@@ -1,5 +1,6 @@
-import {createAppContainer} from 'react-navigation';
-import {createStackNavigator} from 'react-navigation-stack';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
 // Auth screens
 import onBoardScreen from '../screens/onBoardScreen';
@@ -32,24 +33,72 @@ import CoachAddTrainingScreen from '../screens/coach/CoachAddTrainingScreen';
 import CoachCalendarScreen from '../screens/coach/CoachCalendarScreen';
 import CoachDashboardScreen from '../screens/coach/CoachDashboardScreen';
 
-export const AuthNavigator = createAppContainer(createStackNavigator({
-  onBoardScreen, EmailInputScreen, LoginScreen, PasswordInputScreen,
-  SetGoalScreen, CustomizeInterest, SelectGender, TouchAuthentication, SelectProfileScreen,
-}, { initialRouteName: 'onBoardScreen', defaultNavigationOptions: { headerShown: false } }));
+const AuthStack = createStackNavigator();
+const ProfileStack = createStackNavigator();
+const PlayerStack = createStackNavigator();
+const CoachStack = createStackNavigator();
 
-export const ProfileSelectNavigator = createAppContainer(createStackNavigator({
-  SelectProfileScreen,
-}, { initialRouteName: 'SelectProfileScreen', defaultNavigationOptions: { headerShown: false } }));
+const screenOptions = { headerShown: false };
 
-export const PlayerNavigator = createAppContainer(createStackNavigator({
-  HomeScreen, EvaluationScreen, DashboardScreen, TrainingScreen, ScheduleScreen,
-  MatchReportScreen, SpeedTrackingScreen, AICoachScreen, ProfileScreen,
-}, { initialRouteName: 'HomeScreen', defaultNavigationOptions: { headerShown: false } }));
+export function AuthNavigator() {
+  return (
+    <NavigationContainer>
+      <AuthStack.Navigator initialRouteName="onBoardScreen" screenOptions={screenOptions}>
+        <AuthStack.Screen name="onBoardScreen" component={onBoardScreen} />
+        <AuthStack.Screen name="EmailInputScreen" component={EmailInputScreen} />
+        <AuthStack.Screen name="LoginScreen" component={LoginScreen} />
+        <AuthStack.Screen name="PasswordInputScreen" component={PasswordInputScreen} />
+        <AuthStack.Screen name="SetGoalScreen" component={SetGoalScreen} />
+        <AuthStack.Screen name="CustomizeInterest" component={CustomizeInterest} />
+        <AuthStack.Screen name="SelectGender" component={SelectGender} />
+        <AuthStack.Screen name="TouchAuthentication" component={TouchAuthentication} />
+        <AuthStack.Screen name="SelectProfileScreen" component={SelectProfileScreen} />
+      </AuthStack.Navigator>
+    </NavigationContainer>
+  );
+}
 
-export const CoachNavigator = createAppContainer(createStackNavigator({
-  CoachHomeScreen, CoachRosterScreen, CoachPlayerDetailScreen, CoachSendFeedbackScreen,
-  CoachAddTrainingScreen, CoachCalendarScreen, CoachDashboardScreen, ProfileScreen,
-}, { initialRouteName: 'CoachHomeScreen', defaultNavigationOptions: { headerShown: false } }));
+export function ProfileSelectNavigator() {
+  return (
+    <NavigationContainer>
+      <ProfileStack.Navigator screenOptions={screenOptions}>
+        <ProfileStack.Screen name="SelectProfileScreen" component={SelectProfileScreen} />
+      </ProfileStack.Navigator>
+    </NavigationContainer>
+  );
+}
 
-// Keep default export for backward compat
-export default AuthNavigator;
+export function PlayerNavigator() {
+  return (
+    <NavigationContainer>
+      <PlayerStack.Navigator initialRouteName="HomeScreen" screenOptions={screenOptions}>
+        <PlayerStack.Screen name="HomeScreen" component={HomeScreen} />
+        <PlayerStack.Screen name="EvaluationScreen" component={EvaluationScreen} />
+        <PlayerStack.Screen name="DashboardScreen" component={DashboardScreen} />
+        <PlayerStack.Screen name="TrainingScreen" component={TrainingScreen} />
+        <PlayerStack.Screen name="ScheduleScreen" component={ScheduleScreen} />
+        <PlayerStack.Screen name="MatchReportScreen" component={MatchReportScreen} />
+        <PlayerStack.Screen name="SpeedTrackingScreen" component={SpeedTrackingScreen} />
+        <PlayerStack.Screen name="AICoachScreen" component={AICoachScreen} />
+        <PlayerStack.Screen name="ProfileScreen" component={ProfileScreen} />
+      </PlayerStack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+export function CoachNavigator() {
+  return (
+    <NavigationContainer>
+      <CoachStack.Navigator initialRouteName="CoachHomeScreen" screenOptions={screenOptions}>
+        <CoachStack.Screen name="CoachHomeScreen" component={CoachHomeScreen} />
+        <CoachStack.Screen name="CoachRosterScreen" component={CoachRosterScreen} />
+        <CoachStack.Screen name="CoachPlayerDetailScreen" component={CoachPlayerDetailScreen} />
+        <CoachStack.Screen name="CoachSendFeedbackScreen" component={CoachSendFeedbackScreen} />
+        <CoachStack.Screen name="CoachAddTrainingScreen" component={CoachAddTrainingScreen} />
+        <CoachStack.Screen name="CoachCalendarScreen" component={CoachCalendarScreen} />
+        <CoachStack.Screen name="CoachDashboardScreen" component={CoachDashboardScreen} />
+        <CoachStack.Screen name="ProfileScreen" component={ProfileScreen} />
+      </CoachStack.Navigator>
+    </NavigationContainer>
+  );
+}

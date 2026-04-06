@@ -4,7 +4,8 @@ import {
   SafeAreaView, Alert,
 } from 'react-native';
 import { Text, Slider, Icon, Button } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../components/Firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // ─── Physical Tab ────────────────────────────────────────────────────────────
 
@@ -202,17 +203,12 @@ class MentalTab extends Component {
 const TABS = ['Physical', 'Tactical', 'Mental'];
 
 export class EvaluationScreen extends Component {
-  static navigationOptions = { headerShown: false };
   state = { activeTab: 0, saved: { physical: false, tactical: false, mental: false } };
 
   saveSection = (section, data) => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
-    firebase.firestore()
-      .collection('evaluations')
-      .doc(user.uid)
-      .collection('sessions')
-      .add({ section, data, timestamp: firebase.firestore.FieldValue.serverTimestamp() })
+    addDoc(collection(db, 'evaluations', user.uid, 'sessions'), { section, data, timestamp: serverTimestamp() })
       .then(() => {
         this.setState((prev) => ({ saved: { ...prev.saved, [section]: true } }));
         Alert.alert('✅ Saved!', `${section.charAt(0).toUpperCase() + section.slice(1)} evaluation saved. Your virtual coach will review it!`);

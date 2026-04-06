@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Text, Icon, Avatar } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth } from '../components/Firebase';
+import { signOut } from 'firebase/auth';
 
 const NAV_ITEMS = [
   { label: 'AI Coach 🤖', icon: 'psychology', screen: 'AICoachScreen', color: '#9C27B0' },
@@ -14,18 +15,16 @@ const NAV_ITEMS = [
 ];
 
 export class HomeScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = { userEmail: '', role: 'player' };
 
   componentDidMount() {
-    const user = firebase.auth().currentUser;
-    const role = this.props.navigation.getParam('role', 'player');
+    const user = auth.currentUser;
+    const role = this.props.route?.params?.role ?? 'player';
     if (user) this.setState({ userEmail: user.email, role });
   }
 
   logout = () => {
-    firebase.auth().signOut().then(() => {
+    signOut(auth).then(() => {
       this.props.navigation.navigate('LoginScreen');
     });
   };

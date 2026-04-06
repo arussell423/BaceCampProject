@@ -5,7 +5,8 @@ import {
   ActivityIndicator, ScrollView,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../components/Firebase';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
 const OPENAI_API_KEY = 'YOUR_OPENAI_KEY_HERE'; // Replace with your OpenAI API key
 
@@ -20,8 +21,6 @@ const QUICK_SUGGESTIONS = [
 let cachedMessages = null;
 
 export class AICoachScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     messages: [],
     inputText: '',
@@ -30,7 +29,7 @@ export class AICoachScreen extends Component {
   };
 
   componentDidMount() {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     const playerName = (user && (user.displayName || user.email)) || 'Player';
     this.setState({ playerName });
 
@@ -49,16 +48,10 @@ export class AICoachScreen extends Component {
   }
 
   loadLastEval = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      const snap = await firebase.firestore()
-        .collection('evaluations')
-        .doc(user.uid)
-        .collection('sessions')
-        .orderBy('timestamp', 'desc')
-        .limit(1)
-        .get();
+      const snap = await getDocs(query(collection(db, 'evaluations', user.uid, 'sessions'), orderBy('timestamp', 'desc'), limit(1)));
       if (!snap.empty) {
         const data = snap.docs[0].data();
         const hint = {

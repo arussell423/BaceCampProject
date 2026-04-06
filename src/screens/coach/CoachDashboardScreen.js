@@ -4,7 +4,8 @@ import {
   ScrollView, ActivityIndicator,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import firebase from 'firebase';
+import { auth, db } from '../../components/Firebase';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
 const SORT_OPTIONS = ['Performance', 'Wellness', 'Name'];
 
@@ -20,8 +21,6 @@ const MetricBar = ({ score, colour, maxWidth }) => (
 );
 
 export class CoachDashboardScreen extends Component {
-  static navigationOptions = { headerShown: false };
-
   state = {
     players: [],
     loading: true,
@@ -33,18 +32,15 @@ export class CoachDashboardScreen extends Component {
   }
 
   loadPlayers = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     try {
-      const snap = await firebase.firestore()
-        .collection('playerRosters').doc(user.uid).collection('players').get();
+      const snap = await getDocs(collection(db, 'playerRosters', user.uid, 'players'));
 
       const players = await Promise.all(snap.docs.map(async (playerDoc) => {
         const p = { id: playerDoc.id, ...playerDoc.data() };
         try {
-          const evalSnap = await firebase.firestore()
-            .collection('evaluations').doc(playerDoc.id).collection('sessions')
-            .orderBy('timestamp', 'desc').limit(5).get();
+          const evalSnap = await getDocs(query(collection(db, 'evaluations', playerDoc.id, 'sessions'), orderBy('timestamp', 'desc'), limit(5)));
 
           const evals = evalSnap.docs.map((d) => d.data());
           const physEval = evals.find((e) => e.section === 'physical');

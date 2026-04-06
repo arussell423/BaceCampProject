@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { Text, Icon, Button } from 'react-native-elements';
 
-import firebase from 'firebase';
+import { auth, db } from '../components/Firebase';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
 const CATEGORIES = ['Strength', 'Power', 'Speed', 'Footwork', 'Flexibility'];
 
@@ -115,7 +116,6 @@ const cardStyles = StyleSheet.create({
 });
 
 export class TrainingScreen extends Component {
-  static navigationOptions = { headerShown: false };
   state = { activeCategory: 'Strength', coachWorkouts: [], loadingCoach: false };
 
   componentDidMount() {
@@ -123,13 +123,11 @@ export class TrainingScreen extends Component {
   }
 
   loadCoachWorkouts = async () => {
-    const user = firebase.auth().currentUser;
+    const user = auth.currentUser;
     if (!user) return;
     this.setState({ loadingCoach: true });
     try {
-      const snap = await firebase.firestore()
-        .collection('coachTraining').doc(user.uid).collection('sessions')
-        .orderBy('timestamp', 'desc').limit(10).get();
+      const snap = await getDocs(query(collection(db, 'coachTraining', user.uid, 'sessions'), orderBy('timestamp', 'desc'), limit(10)));
       const coachWorkouts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       this.setState({ coachWorkouts, loadingCoach: false });
     } catch (e) {
