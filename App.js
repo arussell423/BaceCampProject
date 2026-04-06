@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './src/components/Firebase';
-import { AuthNavigator, PlayerNavigator, CoachNavigator, ProfileSelectNavigator } from './src/components/Navigator';
+import { RootNavigator } from './src/components/Navigator';
 
 export class App extends Component {
   state = { loading: true, user: null, role: null };
@@ -14,12 +14,14 @@ export class App extends Component {
     this.authUnsub = onAuthStateChanged(auth, (user) => {
       if (this.roleUnsub) { this.roleUnsub(); this.roleUnsub = null; }
       if (user) {
-        this.roleUnsub = onSnapshot(doc(db, 'users', user.uid), (snap) => {
-          const role = snap.exists() ? (snap.data().role || null) : null;
-          this.setState({ user, role, loading: false });
-        }, () => {
-          this.setState({ user, role: 'player', loading: false });
-        });
+        this.roleUnsub = onSnapshot(
+          doc(db, 'users', user.uid),
+          (snap) => {
+            const role = snap.exists() ? (snap.data().role || null) : null;
+            this.setState({ user, role, loading: false });
+          },
+          () => this.setState({ user, role: 'player', loading: false })
+        );
       } else {
         this.setState({ user: null, role: null, loading: false });
       }
@@ -34,27 +36,22 @@ export class App extends Component {
   render() {
     const { loading, user, role } = this.state;
 
-    let content;
     if (loading) {
-      content = (
-        <View style={styles.loading}>
-          <ActivityIndicator size="large" color="#008000" />
-        </View>
+      return (
+        <GestureHandlerRootView style={styles.root}>
+          <SafeAreaProvider>
+            <View style={styles.loading}>
+              <ActivityIndicator size="large" color="#008000" />
+            </View>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
       );
-    } else if (!user) {
-      content = <AuthNavigator />;
-    } else if (!role) {
-      content = <ProfileSelectNavigator />;
-    } else if (role === 'coach') {
-      content = <CoachNavigator />;
-    } else {
-      content = <PlayerNavigator />;
     }
 
     return (
       <GestureHandlerRootView style={styles.root}>
         <SafeAreaProvider>
-          {content}
+          <RootNavigator user={user} role={role} />
         </SafeAreaProvider>
       </GestureHandlerRootView>
     );
