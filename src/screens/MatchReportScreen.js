@@ -60,7 +60,7 @@ export class MatchReportScreen extends Component {
         loading: false, saved: true,
         opponent: '', myScore: '', oppScore: '', result: null, notes: '', gamePlan: '',
       });
-      Alert.alert('✅ Match Report Saved!', 'Your report has been saved to your log.');
+      Alert.alert(' Match Report Saved!', 'Your report has been saved to your log.');
       this.loadPastReports();
     } catch (e) {
       this.setState({ loading: false });
@@ -115,7 +115,7 @@ export class MatchReportScreen extends Component {
                     onPress={() => this.setState({ result: r })}
                   >
                     <Text style={[styles.resultText, result === r && { color: 'white' }]}>
-                      {r === 'win' ? '🏆 Win' : r === 'loss' ? '❌ Loss' : '🤝 Draw'}
+                      {r === 'win' ? 'Win' : r === 'loss' ? 'Loss' : 'Draw'}
                     </Text>
                   </TouchableOpacity>
                 ))}

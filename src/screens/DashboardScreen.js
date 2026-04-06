@@ -119,7 +119,7 @@ export class DashboardScreen extends Component {
 
               {/* Performance breakdown */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>📊 Performance Breakdown</Text>
+                <Text style={styles.sectionTitle}>Performance Breakdown</Text>
                 {PERF_CATEGORIES.map((cat) => (
                   <MetricBar key={cat} label={cat} score={performance[cat]} colour="#008000" />
                 ))}
@@ -127,7 +127,7 @@ export class DashboardScreen extends Component {
 
               {/* Wellness breakdown */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>🧠 Mental & Wellness Breakdown</Text>
+                <Text style={styles.sectionTitle}>Mental & Wellness & Wellness Breakdown</Text>
                 {WELLNESS_CATEGORIES.map((cat) => (
                   <MetricBar key={cat} label={cat} score={wellness[cat]} colour="#2196F3" />
                 ))}
@@ -136,7 +136,7 @@ export class DashboardScreen extends Component {
               {/* No data hint */}
               {perfAggregate === 0 && (
                 <View style={styles.hintBox}>
-                  <Text style={styles.hintTitle}>🎾 No evaluation data yet</Text>
+                  <Text style={styles.hintTitle}>No evaluation data yet</Text>
                   <Text style={styles.hintText}>Complete your first evaluation to see your stats here.</Text>
                 </View>
               )}

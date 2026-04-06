@@ -81,15 +81,15 @@ class WorkoutCard extends Component {
             {!rating ? (
               <View style={cardStyles.ratingRow}>
                 <TouchableOpacity onPress={() => this.setState({ rating: 'like' })} style={cardStyles.ratingBtn}>
-                  <Text style={{ fontSize: 24 }}>👍</Text>
+                  <Icon name="thumb-up-outline" type="material-community" size={28} color="#008000" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => this.setState({ rating: 'dislike' })} style={cardStyles.ratingBtn}>
-                  <Text style={{ fontSize: 24 }}>👎</Text>
+                  <Icon name="thumb-down-outline" type="material-community" size={28} color="#e53935" />
                 </TouchableOpacity>
               </View>
             ) : (
               <Text style={{ color: '#555', marginTop: 6 }}>
-                {rating === 'like' ? '🎉 Great work! Keep it up!' : '💪 No worries — try a different workout next time.'}
+                {rating === 'like' ? 'Great work! Keep it up!' : 'No worries — try a different workout next time.'}
               </Text>
             )}
           </View>
@@ -166,7 +166,7 @@ export class TrainingScreen extends Component {
           {/* Coach-assigned section */}
           {coachWorkouts.length > 0 && (
             <View style={styles.coachSection}>
-              <Text style={styles.coachSectionTitle}>📋 Coach Assigned</Text>
+              <Text style={styles.coachSectionTitle}>Coach Assigned</Text>
               {coachWorkouts.map((cw) => (
                 <View key={cw.id} style={styles.coachCard}>
                   <View style={styles.coachCardHeader}>
@@ -178,7 +178,7 @@ export class TrainingScreen extends Component {
                     ) : null}
                   </View>
                   {cw.description ? <Text style={styles.coachCardDesc}>{cw.description}</Text> : null}
-                  {cw.videoUrl ? <Text style={styles.coachCardVideo}>🎥 {cw.videoUrl}</Text> : null}
+                  {cw.videoUrl ? <Text style={styles.coachCardVideo}>[Video] {cw.videoUrl}</Text> : null}
                 </View>
               ))}
             </View>

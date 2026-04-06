@@ -20,9 +20,9 @@ const MUSCLE_GROUPS = [
 ];
 
 const BODY_COLOURS = [
-  { label: 'Painful', colour: '#e53935', emoji: '🔴' },
-  { label: 'Achy', colour: '#43a047', emoji: '🟢' },
-  { label: 'Fatigued', colour: '#fdd835', emoji: '🟡' },
+  { label: 'Painful', colour: '#e53935' },
+  { label: 'Achy',    colour: '#43a047' },
+  { label: 'Fatigued',colour: '#fdd835' },
 ];
 
 class PhysicalTab extends Component {
@@ -60,8 +60,8 @@ class PhysicalTab extends Component {
               style={[styles.colourChip, selectedColour === c.label && { borderColor: c.colour, borderWidth: 3 }]}
               onPress={() => this.setState({ selectedColour: c.label })}
             >
-              <Text style={{ fontSize: 22 }}>{c.emoji}</Text>
-              <Text style={{ fontSize: 11, color: '#333', marginTop: 2 }}>{c.label}</Text>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.colour, marginBottom: 4 }} />
+              <Text style={{ fontSize: 11, color: '#333' }}>{c.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -86,9 +86,9 @@ class PhysicalTab extends Component {
         {/* Ratings */}
         <Text style={styles.sectionLabel}>Performance Ratings</Text>
         {[
-          { label: `⚡ Speed: ${speed}/5`, key: 'speed', val: speed },
-          { label: `💪 Strength: ${strength}/5`, key: 'strength', val: strength },
-          { label: `🔥 Power: ${power}/5`, key: 'power', val: power },
+          { label: `Speed: ${speed}/5`, key: 'speed', val: speed },
+          { label: `Strength: ${strength}/5`, key: 'strength', val: strength },
+          { label: `Power: ${power}/5`, key: 'power', val: power },
         ].map((item) => (
           <View key={item.key} style={styles.sliderRow}>
             <Text style={styles.sliderLabel}>{item.label}</Text>
@@ -123,10 +123,10 @@ class TacticalTab extends Component {
   render() {
     const { unforcedErrors, winners, shotPlacement, shotSelection } = this.state;
     const metrics = [
-      { label: `❌ Unforced Errors: ${unforcedErrors}/10`, key: 'unforcedErrors', val: unforcedErrors },
-      { label: `🏆 Winners: ${winners}/10`, key: 'winners', val: winners },
-      { label: `🎯 Shot Placement: ${shotPlacement}/10`, key: 'shotPlacement', val: shotPlacement },
-      { label: `🧠 Shot Selection: ${shotSelection}/10`, key: 'shotSelection', val: shotSelection },
+      { label: `Unforced Errors: ${unforcedErrors}/10`, key: 'unforcedErrors', val: unforcedErrors },
+      { label: `Winners: ${winners}/10`, key: 'winners', val: winners },
+      { label: `Shot Placement: ${shotPlacement}/10`, key: 'shotPlacement', val: shotPlacement },
+      { label: `Shot Selection: ${shotSelection}/10`, key: 'shotSelection', val: shotSelection },
     ];
     return (
       <ScrollView contentContainerStyle={styles.tabContent}>
@@ -162,9 +162,9 @@ class MentalTab extends Component {
   render() {
     const { attitude, effort, nerves } = this.state;
     const metrics = [
-      { label: `😊 Attitude: ${attitude}/10`, key: 'attitude', val: attitude },
-      { label: `💯 Effort: ${effort}/10`, key: 'effort', val: effort },
-      { label: `😰 Nerves: ${nerves}/10`, key: 'nerves', val: nerves },
+      { label: `Attitude: ${attitude}/10`, key: 'attitude', val: attitude },
+      { label: `Effort: ${effort}/10`, key: 'effort', val: effort },
+      { label: `Nerves: ${nerves}/10`, key: 'nerves', val: nerves },
     ];
     return (
       <ScrollView contentContainerStyle={styles.tabContent}>
@@ -182,7 +182,7 @@ class MentalTab extends Component {
           </View>
         ))}
         <View style={styles.coachHint}>
-          <Text style={styles.coachHintTitle}>🤖 Virtual Coach Tip</Text>
+          <Text style={styles.coachHintTitle}> Virtual Coach Tip</Text>
           <Text style={styles.coachHintText}>
             Rate your nerves honestly — managing nerves is the #1 factor in match performance!
           </Text>
@@ -211,7 +211,7 @@ export class EvaluationScreen extends Component {
     addDoc(collection(db, 'evaluations', user.uid, 'sessions'), { section, data, timestamp: serverTimestamp() })
       .then(() => {
         this.setState((prev) => ({ saved: { ...prev.saved, [section]: true } }));
-        Alert.alert('✅ Saved!', `${section.charAt(0).toUpperCase() + section.slice(1)} evaluation saved. Your virtual coach will review it!`);
+        Alert.alert(' Saved!', `${section.charAt(0).toUpperCase() + section.slice(1)} evaluation saved. Your virtual coach will review it!`);
       })
       .catch(() => Alert.alert('Error', 'Could not save. Please check your connection.'));
   };

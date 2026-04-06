@@ -1,20 +1,19 @@
-import React, { Component } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Text, Button } from 'react-native-elements';
+import React, { Component } from "react";
+import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { Text, Button, Icon } from "react-native-elements";
 
 const interests = [
-  { key: 'singles', label: 'Singles', emoji: '🧍' },
-  { key: 'doubles', label: 'Doubles', emoji: '👥' },
-  { key: 'strength', label: 'Strength Training', emoji: '🏋️' },
-  { key: 'speed', label: 'Speed Drills', emoji: '⚡' },
-  { key: 'nutrition', label: 'Nutrition', emoji: '🥗' },
-  { key: 'mental', label: 'Mental Training', emoji: '🧘' },
-  { key: 'footwork', label: 'Footwork', emoji: '👟' },
-  { key: 'flexibility', label: 'Flexibility', emoji: '🤸' },
+  { key: "singles",     label: "Singles",           icon: "account",           type: "material-community", color: "#1B5E20" },
+  { key: "doubles",     label: "Doubles",           icon: "account-group",     type: "material-community", color: "#0D47A1" },
+  { key: "strength",    label: "Strength Training", icon: "dumbbell",          type: "material-community", color: "#B71C1C" },
+  { key: "speed",       label: "Speed Drills",      icon: "timer-outline",     type: "material-community", color: "#E65100" },
+  { key: "nutrition",   label: "Nutrition",         icon: "food-apple-outline",type: "material-community", color: "#2E7D32" },
+  { key: "mental",      label: "Mental Training",   icon: "head-cog-outline",  type: "material-community", color: "#4527A0" },
+  { key: "footwork",    label: "Footwork",          icon: "shoe-sneaker",      type: "material-community", color: "#006064" },
+  { key: "flexibility", label: "Flexibility",       icon: "yoga",              type: "material-community", color: "#37474F" },
 ];
 
 export class CustomizeInterest extends Component {
-  static navigationOptions = { headerShown: false };
   state = { selected: [] };
 
   toggle = (key) => {
@@ -29,14 +28,14 @@ export class CustomizeInterest extends Component {
     return (
       <ScrollView contentContainerStyle={styles.container}>
         <Text h3 style={styles.title}>Your Interests</Text>
-        <Text style={styles.subtitle}>Select topics you'd like to focus on</Text>
+        <Text style={styles.subtitle}>Select topics you would like to focus on</Text>
         <View style={styles.grid}>
           {interests.map((item) => {
             const active = selected.includes(item.key);
             return (
-              <TouchableOpacity key={item.key} style={[styles.card, active && styles.cardActive]} onPress={() => this.toggle(item.key)}>
-                <Text style={styles.emoji}>{item.emoji}</Text>
-                <Text style={[styles.label, active && styles.labelActive]}>{item.label}</Text>
+              <TouchableOpacity key={item.key} style={[styles.card, active && { borderColor: item.color, backgroundColor: item.color + "12" }]} onPress={() => this.toggle(item.key)}>
+                <Icon name={item.icon} type={item.type} size={30} color={active ? item.color : "#999"} />
+                <Text style={[styles.label, active && { color: item.color, fontWeight: "700" }]}>{item.label}</Text>
               </TouchableOpacity>
             );
           })}
@@ -45,9 +44,9 @@ export class CustomizeInterest extends Component {
           title="Continue"
           disabled={selected.length === 0}
           buttonStyle={styles.btn}
-          titleStyle={{ fontWeight: 'bold', fontSize: 18 }}
+          titleStyle={{ fontWeight: "bold", fontSize: 18 }}
           containerStyle={{ width: 300, marginTop: 20 }}
-          onPress={() => this.props.navigation.navigate('SelectGender')}
+          onPress={() => this.props.navigation.navigate("SelectGender")}
         />
       </ScrollView>
     );
@@ -55,16 +54,13 @@ export class CustomizeInterest extends Component {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, backgroundColor: '#F4F6FA', alignItems: 'center', padding: 30, paddingTop: 60 },
-  title: { textAlign: 'center', marginBottom: 8 },
-  subtitle: { color: 'grey', textAlign: 'center', marginBottom: 30 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
-  card: { width: 140, height: 100, backgroundColor: 'white', borderRadius: 12, margin: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: '#ddd' },
-  cardActive: { borderColor: '#008000', backgroundColor: '#e8f5e9' },
-  emoji: { fontSize: 32 },
-  label: { marginTop: 6, fontSize: 13, color: '#333', textAlign: 'center' },
-  labelActive: { color: '#008000', fontWeight: 'bold' },
-  btn: { backgroundColor: '#008000', borderRadius: 12 },
+  container: { flexGrow: 1, backgroundColor: "#F4F6FA", alignItems: "center", padding: 30, paddingTop: 60 },
+  title: { textAlign: "center", marginBottom: 8 },
+  subtitle: { color: "grey", textAlign: "center", marginBottom: 30 },
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center" },
+  card: { width: 140, height: 110, backgroundColor: "white", borderRadius: 14, margin: 8, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#ddd" },
+  label: { marginTop: 8, fontSize: 12, color: "#555", textAlign: "center" },
+  btn: { backgroundColor: "#008000", borderRadius: 12 },
 });
 
 export default CustomizeInterest;

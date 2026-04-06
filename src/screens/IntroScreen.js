@@ -1,10 +1,6 @@
 import React, { Component } from 'react'
 import {View, StyleSheet,ActivityIndicator,TouchableOpacity,} from 'react-native';
 import {Text, Icon, Image, Button} from 'react-native-elements';
-import { Assets } from 'react-navigation-stack';
-
-
-
     const styles = StyleSheet.create({
         container: {
             backgroundColor: '#ffffff',

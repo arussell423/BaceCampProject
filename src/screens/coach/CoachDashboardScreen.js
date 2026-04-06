@@ -135,9 +135,8 @@ export class CoachDashboardScreen extends Component {
                   })}
                 >
                   <View style={dbStyles.playerHeader}>
-                    <Text style={dbStyles.playerName}>
-                      {stale ? '⚠️ ' : ''}{player.name || player.email}
-                    </Text>
+                    {stale && <Icon name="alert-outline" type="material-community" size={16} color="#E65100" style={{ marginRight: 6 }} />}
+                    <Text style={dbStyles.playerName}>{player.name || player.email}</Text>
                     <Icon name="chevron-right" type="material" color="#ccc" size={20} />
                   </View>
 

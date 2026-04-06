@@ -117,7 +117,7 @@ export class CoachAddTrainingScreen extends Component {
 
           {saved && (
             <View style={styles.savedBox}>
-              <Text style={styles.savedText}>✅ Training added successfully!</Text>
+              <Text style={styles.savedText}> Training added successfully!</Text>
             </View>
           )}
 

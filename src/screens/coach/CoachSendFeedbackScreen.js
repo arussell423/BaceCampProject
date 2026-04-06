@@ -119,7 +119,7 @@ export class CoachSendFeedbackScreen extends Component {
 
           {sent ? (
             <View style={styles.sentBox}>
-              <Text style={styles.sentText}>✅ Feedback sent to player!</Text>
+              <Text style={styles.sentText}> Feedback sent to player!</Text>
             </View>
           ) : (
             <TouchableOpacity

@@ -89,7 +89,7 @@ export class ProfileScreen extends Component {
                 containerStyle={{ backgroundColor: '#008000' }}
               />
               <View style={styles.roleBadge}>
-                <Text style={styles.roleText}>{role === 'coach' ? '🧑‍🏫 Coach' : '🎾 Player'}</Text>
+                <Text style={styles.roleText}>{role === 'coach' ? '‍ Coach' : ' Player'}</Text>
               </View>
             </View>
 

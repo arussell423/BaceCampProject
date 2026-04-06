@@ -85,13 +85,14 @@ export class CoachHomeScreen extends Component {
         ) : (
           <ScrollView contentContainerStyle={styles.container}>
             {/* Welcome */}
-            <Text style={styles.welcomeText}>Welcome, {coachName} 👋</Text>
+            <Text style={styles.welcomeText}>Welcome, {coachName}</Text>
 
             {/* Alert banner */}
             {newEvalCount > 0 && (
               <View style={styles.alertBanner}>
+                <Icon name="alert-circle-outline" type="material-community" size={18} color="#856404" style={{ marginRight: 8 }} />
                 <Text style={styles.alertText}>
-                  ⚠️ {newEvalCount} player(s) submitted new evaluations
+                  {newEvalCount} player(s) submitted new evaluations
                 </Text>
               </View>
             )}
@@ -142,6 +143,7 @@ const styles = StyleSheet.create({
   alertBanner: {
     backgroundColor: '#FFF3E0', borderRadius: 12, padding: 14,
     marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#FF9800',
+    flexDirection: 'row', alignItems: 'center',
   },
   alertText: { color: '#E65100', fontWeight: '600', fontSize: 14 },
   statsRow: { flexDirection: 'row', marginBottom: 24 },

@@ -79,7 +79,7 @@ export class CoachPlayerDetailScreen extends Component {
           <Text style={styles.emptyText}>No evaluation data yet for this player.</Text>
         ) : (
           <View style={styles.metricsCard}>
-            <Text style={styles.metricsTitle}>📊 Performance Metrics</Text>
+            <Text style={styles.metricsTitle}>Performance Metrics</Text>
             {Object.entries(perfScores).map(([key, val]) => (
               <MetricBar key={key} label={key} score={val} colour="#008000" />
             ))}
@@ -106,7 +106,7 @@ export class CoachPlayerDetailScreen extends Component {
               </View>
               <Text style={styles.trainingDesc}>{tp.description}</Text>
               {tp.videoUrl ? (
-                <Text style={styles.videoUrl}>🎥 {tp.videoUrl}</Text>
+                <Text style={styles.videoUrl}>[Video] {tp.videoUrl}</Text>
               ) : null}
             </View>
           ))

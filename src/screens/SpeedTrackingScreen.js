@@ -120,7 +120,7 @@ export class SpeedTrackingScreen extends Component {
           <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
             <Icon name="arrow-back" type="material" color="#008000" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Speed Drills ⚡</Text>
+          <Text style={styles.headerTitle}>Speed Drills </Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -144,7 +144,7 @@ export class SpeedTrackingScreen extends Component {
           <View style={styles.timerCard}>
             <Text style={styles.timerText}>{formatTime(timeMs)}</Text>
             {pb !== null && pb !== undefined && (
-              <Text style={styles.pbText}>🏆 PB: {formatTime(pb)}</Text>
+              <Text style={styles.pbText}> PB: {formatTime(pb)}</Text>
             )}
           </View>
 
@@ -179,7 +179,7 @@ export class SpeedTrackingScreen extends Component {
                     {item.timestamp ? new Date(item.timestamp.toDate()).toLocaleDateString() : '—'}
                   </Text>
                   {idx === 0 && pb === item.timeMs && (
-                    <Text style={styles.pbBadge}>🏆 PB</Text>
+                    <Text style={styles.pbBadge}> PB</Text>
                   )}
                 </View>
               ))}

@@ -35,7 +35,7 @@ export class AICoachScreen extends Component {
 
     const welcome = {
       role: 'assistant',
-      content: `Hi ${playerName}! 👋 I'm your bACE CAMP AI Coach. Ask me anything about tennis training, technique, strategy, or recovery!`,
+      content: `Hi ${playerName}! I'm your bACE CAMP AI Coach. Ask me anything about tennis training, technique, strategy, or recovery!`,
     };
 
     if (cachedMessages && cachedMessages.length > 0) {
@@ -56,7 +56,7 @@ export class AICoachScreen extends Component {
         const data = snap.docs[0].data();
         const hint = {
           role: 'assistant',
-          content: `📊 I can see your latest evaluation data (${data.section || 'performance'} section). Feel free to ask me for personalised advice based on your scores!`,
+          content: `I can see your latest evaluation data (${data.section || 'performance'} section). Feel free to ask me for personalised advice based on your scores!`,
         };
         this.setState((prev) => {
           const msgs = [...prev.messages, hint];
@@ -75,7 +75,7 @@ export class AICoachScreen extends Component {
     this.setState({ inputText: '' });
 
     const userMsg = { role: 'user', content };
-    const thinkingMsg = { role: 'assistant', content: '💭 Thinking...', thinking: true };
+    const thinkingMsg = { role: 'assistant', content: 'Thinking...', thinking: true };
 
     this.setState((prev) => {
       const msgs = [...prev.messages, userMsg, thinkingMsg];
@@ -144,7 +144,7 @@ export class AICoachScreen extends Component {
           <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
             <Icon name="arrow-back" type="material" color="#008000" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>AI Coach 🤖</Text>
+          <Text style={styles.headerTitle}>AI Coach </Text>
           <View style={{ width: 24 }} />
         </View>
 
