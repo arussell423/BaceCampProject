@@ -6,11 +6,17 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './src/components/Firebase';
 import { RootNavigator } from './src/components/Navigator';
+import { registerRoleChangeCallback } from './src/components/roleManager';
 
 export class App extends Component {
   state = { loading: true, user: null, role: null };
 
   componentDidMount() {
+    // Allow any screen to directly update role state (bypasses onSnapshot delay)
+    registerRoleChangeCallback((newRole) => {
+      this.setState({ role: newRole });
+    });
+
     this.authUnsub = onAuthStateChanged(auth, (user) => {
       if (this.roleUnsub) { this.roleUnsub(); this.roleUnsub = null; }
       if (user) {
