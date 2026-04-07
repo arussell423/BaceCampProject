@@ -1,12 +1,14 @@
 import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
-  View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
+  View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Dimensions,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
+import { LineChart } from 'react-native-chart-kit';
 import { auth, db } from '../components/Firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
 const PERF_CATEGORIES = ['Speed', 'Strength', 'Power'];
 const WELLNESS_CATEGORIES = ['Attitude', 'Effort', 'Nerves'];
 
@@ -28,6 +30,8 @@ export class DashboardScreen extends Component {
     perfAggregate: 0,
     wellnessAggregate: 0,
     lastUpdated: null,
+    // Chart data: arrays of {date, speed, strength, power, attitude, effort, nerves}
+    trendData: [],
   };
 
   componentDidMount() {
@@ -38,33 +42,62 @@ export class DashboardScreen extends Component {
     const user = auth.currentUser;
     if (!user) return;
     try {
-      const snap = await getDocs(query(collection(db, 'evaluations', user.uid, 'sessions'), orderBy('timestamp', 'desc'), limit(20)));
+      const snap = await getDocs(query(collection(db, 'evaluations', user.uid, 'sessions'), orderBy('timestamp', 'desc'), limit(40)));
 
       let latestPhysical = null;
       let latestTactical = null;
       let latestMental = null;
       let lastUpdated = null;
 
-      snap.forEach((doc) => {
-        const d = doc.data();
-        if (d.section === 'physical' && !latestPhysical) latestPhysical = d.data;
-        if (d.section === 'tactical' && !latestTactical) latestTactical = d.data;
-        if (d.section === 'mental' && !latestMental) latestMental = d.data;
+      // Group by date to build trend points (up to 8 most recent physical sessions)
+      const physicalSessions = [];
+      const mentalSessions = [];
+
+      snap.forEach((docSnap) => {
+        const d = docSnap.data();
+        const dateLabel = d.timestamp ? d.timestamp.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+        if (d.section === 'physical' && !latestPhysical) { latestPhysical = d.data; }
+        if (d.section === 'tactical' && !latestTactical) { latestTactical = d.data; }
+        if (d.section === 'mental' && !latestMental) { latestMental = d.data; }
         if (!lastUpdated && d.timestamp) lastUpdated = d.timestamp.toDate().toLocaleDateString();
+        if (d.section === 'physical' && physicalSessions.length < 8) {
+          physicalSessions.push({ date: dateLabel, data: d.data });
+        }
+        if (d.section === 'mental' && mentalSessions.length < 8) {
+          mentalSessions.push({ date: dateLabel, data: d.data });
+        }
+      });
+
+      // Reverse so earliest is on the left
+      physicalSessions.reverse();
+      mentalSessions.reverse();
+
+      // Build trendData aligned by index (use physical as primary timeline)
+      const trendLength = Math.max(physicalSessions.length, mentalSessions.length, 1);
+      const trendData = Array.from({ length: trendLength }, (_, i) => {
+        const p = physicalSessions[i]?.data || {};
+        const m = mentalSessions[i]?.data || {};
+        return {
+          date: physicalSessions[i]?.date || mentalSessions[i]?.date || '',
+          speed:    Math.round(((p.speed    || 0) / 5) * 100),
+          strength: Math.round(((p.strength || 0) / 5) * 100),
+          power:    Math.round(((p.power    || 0) / 5) * 100),
+          attitude: Math.round(((m.attitude || 0) / 10) * 100),
+          effort:   Math.round(((m.effort   || 0) / 10) * 100),
+          nerves:   Math.round(((m.nerves   || 0) / 10) * 100),
+        };
       });
 
       const p = latestPhysical || {};
-      const t = latestTactical || {};
       const m = latestMental || {};
-
-      const speedScore = Math.round(((p.speed || 0) / 5) * 100);
+      const speedScore    = Math.round(((p.speed    || 0) / 5) * 100);
       const strengthScore = Math.round(((p.strength || 0) / 5) * 100);
-      const powerScore = Math.round(((p.power || 0) / 5) * 100);
+      const powerScore    = Math.round(((p.power    || 0) / 5) * 100);
       const perfAggregate = Math.round((speedScore + strengthScore + powerScore) / 3);
 
       const attitudeScore = Math.round(((m.attitude || 0) / 10) * 100);
-      const effortScore = Math.round(((m.effort || 0) / 10) * 100);
-      const nervesScore = Math.round(((m.nerves || 0) / 10) * 100);
+      const effortScore   = Math.round(((m.effort   || 0) / 10) * 100);
+      const nervesScore   = Math.round(((m.nerves   || 0) / 10) * 100);
       const wellnessAggregate = Math.round((attitudeScore + effortScore + nervesScore) / 3);
 
       this.setState({
@@ -74,6 +107,7 @@ export class DashboardScreen extends Component {
         perfAggregate,
         wellnessAggregate,
         lastUpdated,
+        trendData,
       });
     } catch (e) {
       this.setState({ loading: false });
@@ -81,7 +115,21 @@ export class DashboardScreen extends Component {
   };
 
   render() {
-    const { loading, performance, wellness, perfAggregate, wellnessAggregate, lastUpdated } = this.state;
+    const { loading, performance, wellness, perfAggregate, wellnessAggregate, lastUpdated, trendData } = this.state;
+
+    const hasTrend = trendData.length >= 2;
+    const chartLabels = trendData.map((d) => d.date);
+    const CHART_CONFIG = {
+      backgroundGradientFrom: '#fff',
+      backgroundGradientTo: '#fff',
+      decimalPlaces: 0,
+      color: (opacity = 1, index) => {
+        const colours = ['rgba(0,128,0,', 'rgba(33,150,243,', 'rgba(255,152,0,'];
+        return `${colours[index % colours.length]}${opacity})`;
+      },
+      labelColor: () => '#888',
+      propsForDots: { r: '3', strokeWidth: '1' },
+    };
 
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -118,6 +166,36 @@ export class DashboardScreen extends Component {
                 ))}
               </View>
 
+              {/* Performance trend chart */}
+              {hasTrend && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Performance Trend</Text>
+                  <Text style={styles.chartLegend}>
+                    <Text style={{ color: 'rgba(0,128,0,1)' }}>● Speed  </Text>
+                    <Text style={{ color: 'rgba(33,150,243,1)' }}>● Strength  </Text>
+                    <Text style={{ color: 'rgba(255,152,0,1)' }}>● Power</Text>
+                  </Text>
+                  <LineChart
+                    data={{
+                      labels: chartLabels,
+                      datasets: [
+                        { data: trendData.map((d) => d.speed),    color: (o) => `rgba(0,128,0,${o})` },
+                        { data: trendData.map((d) => d.strength), color: (o) => `rgba(33,150,243,${o})` },
+                        { data: trendData.map((d) => d.power),    color: (o) => `rgba(255,152,0,${o})` },
+                      ],
+                    }}
+                    width={SCREEN_WIDTH - 56}
+                    height={180}
+                    chartConfig={CHART_CONFIG}
+                    bezier
+                    withInnerLines={false}
+                    style={styles.chart}
+                    fromZero
+                    yAxisSuffix=""
+                  />
+                </View>
+              )}
+
               {/* Wellness breakdown */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Mental & Wellness Breakdown</Text>
@@ -125,6 +203,38 @@ export class DashboardScreen extends Component {
                   <MetricBar key={cat} label={cat} score={wellness[cat]} colour="#2196F3" />
                 ))}
               </View>
+
+              {/* Wellness trend chart */}
+              {hasTrend && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Wellness Trend</Text>
+                  <Text style={styles.chartLegend}>
+                    <Text style={{ color: 'rgba(156,39,176,1)' }}>● Attitude  </Text>
+                    <Text style={{ color: 'rgba(233,30,99,1)' }}>● Effort  </Text>
+                    <Text style={{ color: 'rgba(255,87,34,1)' }}>● Nerves</Text>
+                  </Text>
+                  <LineChart
+                    data={{
+                      labels: chartLabels,
+                      datasets: [
+                        { data: trendData.map((d) => d.attitude), color: (o) => `rgba(156,39,176,${o})` },
+                        { data: trendData.map((d) => d.effort),   color: (o) => `rgba(233,30,99,${o})` },
+                        { data: trendData.map((d) => d.nerves),   color: (o) => `rgba(255,87,34,${o})` },
+                      ],
+                    }}
+                    width={SCREEN_WIDTH - 56}
+                    height={180}
+                    chartConfig={{ ...CHART_CONFIG, color: (opacity = 1, index) => {
+                      const colours = ['rgba(156,39,176,', 'rgba(233,30,99,', 'rgba(255,87,34,'];
+                      return `${colours[index % colours.length]}${opacity})`;
+                    }}}
+                    bezier
+                    withInnerLines={false}
+                    style={styles.chart}
+                    fromZero
+                  />
+                </View>
+              )}
 
               {/* No data hint */}
               {perfAggregate === 0 && (
@@ -162,6 +272,8 @@ const styles = StyleSheet.create({
   hintBox: { backgroundColor: '#fff3e0', borderRadius: 14, padding: 16, borderLeftWidth: 4, borderLeftColor: '#FF9800' },
   hintTitle: { fontWeight: 'bold', color: '#E65100', marginBottom: 6 },
   hintText: { color: '#555', fontSize: 13 },
+  chart: { borderRadius: 10, marginTop: 10 },
+  chartLegend: { fontSize: 11, marginBottom: 4 },
 });
 
 export default DashboardScreen;

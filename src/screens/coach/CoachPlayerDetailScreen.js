@@ -2,16 +2,19 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, ActivityIndicator, TextInput,
+  ScrollView, ActivityIndicator, TextInput, Dimensions,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
+import { LineChart } from 'react-native-chart-kit';
 import { auth, db } from '../../components/Firebase';
 import {
   collection, query, orderBy, limit, getDocs,
   addDoc, serverTimestamp, onSnapshot,
 } from 'firebase/firestore';
+import { getPlayerPushToken, sendPushNotification } from '../../services/notificationService';
 
 const TABS = ['Performance', 'Training', 'Chat', 'History'];
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 const MetricBar = ({ label, score, colour }) => (
   <View style={styles.metricRow}>
@@ -32,6 +35,7 @@ export class CoachPlayerDetailScreen extends Component {
     chatInput: '',
     loading: true,
     perfScores: { Speed: 0, Strength: 0, Power: 0 },
+    trendData: [],
   };
 
   componentDidMount() {
@@ -70,6 +74,11 @@ export class CoachPlayerDetailScreen extends Component {
         timestamp: serverTimestamp(),
         read: false,
       });
+      // Notify player that coach replied
+      const coachName = coachUser?.displayName || coachUser?.email || 'Coach';
+      getPlayerPushToken(this.playerUid)
+        .then((token) => sendPushNotification(token, 'Coach Message', `${coachName}: ${text}`))
+        .catch(() => {});
     } catch (e) { /* silently fail */ }
   };
 
@@ -86,14 +95,14 @@ export class CoachPlayerDetailScreen extends Component {
     if (!playerUid) return;
     try {
       const [evalSnap, trainingSnap] = await Promise.all([
-        getDocs(query(collection(db, 'evaluations', playerUid, 'sessions'), orderBy('timestamp', 'desc'), limit(10))),
+        getDocs(query(collection(db, 'evaluations', playerUid, 'sessions'), orderBy('timestamp', 'desc'), limit(24))),
         getDocs(query(collection(db, 'coachTraining', playerUid, 'sessions'), orderBy('timestamp', 'desc'), limit(10))),
       ]);
 
       const evaluations = evalSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
       const trainingPlans = trainingSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-      // Compute perf scores from latest eval
+      // Compute perf scores from latest physical eval
       let perfScores = { Speed: 0, Strength: 0, Power: 0 };
       const physEval = evaluations.find((e) => e.section === 'physical');
       if (physEval && physEval.data) {
@@ -105,28 +114,81 @@ export class CoachPlayerDetailScreen extends Component {
         };
       }
 
-      this.setState({ evaluations, trainingPlans, perfScores, loading: false });
+      // Build trend data from up to 8 physical sessions (oldest first)
+      const physicalSessions = evaluations
+        .filter((e) => e.section === 'physical')
+        .slice(0, 8)
+        .reverse();
+      const trendData = physicalSessions.map((e) => ({
+        date: e.timestamp ? e.timestamp.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+        speed:    Math.round(((e.data?.speed    || 0) / 5) * 100),
+        strength: Math.round(((e.data?.strength || 0) / 5) * 100),
+        power:    Math.round(((e.data?.power    || 0) / 5) * 100),
+      }));
+
+      this.setState({ evaluations, trainingPlans, perfScores, trendData, loading: false });
     } catch (e) {
       this.setState({ loading: false });
     }
   };
 
   renderPerformance() {
-    const { perfScores, evaluations } = this.state;
+    const { perfScores, evaluations, trendData } = this.state;
     const hasData = evaluations.length > 0;
+    const hasTrend = trendData.length >= 2;
+    const CHART_CONFIG = {
+      backgroundGradientFrom: '#fff',
+      backgroundGradientTo: '#fff',
+      decimalPlaces: 0,
+      color: (opacity = 1, index) => {
+        const colours = ['rgba(0,128,0,', 'rgba(33,150,243,', 'rgba(255,152,0,'];
+        return `${colours[index % colours.length]}${opacity})`;
+      },
+      labelColor: () => '#888',
+      propsForDots: { r: '3', strokeWidth: '1' },
+    };
     return (
-      <View style={styles.tabContent}>
+      <ScrollView contentContainerStyle={styles.tabContent}>
         {!hasData ? (
           <Text style={styles.emptyText}>No evaluation data yet for this player.</Text>
         ) : (
-          <View style={styles.metricsCard}>
-            <Text style={styles.metricsTitle}>Performance Metrics</Text>
-            {Object.entries(perfScores).map(([key, val]) => (
-              <MetricBar key={key} label={key} score={val} colour="#008000" />
-            ))}
-          </View>
+          <>
+            <View style={styles.metricsCard}>
+              <Text style={styles.metricsTitle}>Latest Performance Metrics</Text>
+              {Object.entries(perfScores).map(([key, val]) => (
+                <MetricBar key={key} label={key} score={val} colour="#008000" />
+              ))}
+            </View>
+            {hasTrend && (
+              <View style={[styles.metricsCard, { marginTop: 12 }]}>
+                <Text style={styles.metricsTitle}>Performance Trend</Text>
+                <Text style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>
+                  <Text style={{ color: 'rgba(0,128,0,1)' }}>● Speed  </Text>
+                  <Text style={{ color: 'rgba(33,150,243,1)' }}>● Strength  </Text>
+                  <Text style={{ color: 'rgba(255,152,0,1)' }}>● Power</Text>
+                </Text>
+                <LineChart
+                  data={{
+                    labels: trendData.map((d) => d.date),
+                    datasets: [
+                      { data: trendData.map((d) => d.speed),    color: (o) => `rgba(0,128,0,${o})` },
+                      { data: trendData.map((d) => d.strength), color: (o) => `rgba(33,150,243,${o})` },
+                      { data: trendData.map((d) => d.power),    color: (o) => `rgba(255,152,0,${o})` },
+                    ],
+                  }}
+                  width={SCREEN_WIDTH - 72}
+                  height={180}
+                  chartConfig={CHART_CONFIG}
+                  bezier
+                  withInnerLines={false}
+                  style={{ borderRadius: 10, marginTop: 8 }}
+                  fromZero
+                />
+              </View>
+            )}
+          </>
         )}
-      </View>
+      </ScrollView>
     );
   }
 

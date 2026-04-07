@@ -7,6 +7,7 @@ import {
 import { Text, Icon } from 'react-native-elements';
 import { auth, db } from '../../components/Firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getPlayerPushToken, sendPushNotification } from '../../services/notificationService';
 
 const FEEDBACK_TYPES = ['Text', 'Photo', 'Video'];
 
@@ -46,6 +47,10 @@ export class CoachSendFeedbackScreen extends Component {
         read: false,
       });
       this.setState({ sent: true, sending: false });
+      // Notify player that coach sent feedback
+      getPlayerPushToken(this.playerUid)
+        .then((token) => sendPushNotification(token, 'New Coach Feedback', `Your coach sent you ${feedbackType.toLowerCase()} feedback`))
+        .catch(() => {});
     } catch (e) {
       Alert.alert('Error', 'Could not send feedback.');
       this.setState({ sending: false });

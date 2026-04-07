@@ -7,6 +7,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './src/components/Firebase';
 import { RootNavigator } from './src/components/Navigator';
 import { registerRoleChangeCallback } from './src/components/roleManager';
+import { registerForPushNotifications, saveTokenToFirestore } from './src/services/notificationService';
 
 export class App extends Component {
   state = { loading: true, user: null, role: null };
@@ -20,6 +21,10 @@ export class App extends Component {
     this.authUnsub = onAuthStateChanged(auth, (user) => {
       if (this.roleUnsub) { this.roleUnsub(); this.roleUnsub = null; }
       if (user) {
+        // Register push notifications and save token for this user
+        registerForPushNotifications()
+          .then((token) => { if (token) saveTokenToFirestore(user.uid, token); })
+          .catch(() => {});
         this.roleUnsub = onSnapshot(
           doc(db, 'users', user.uid),
           (snap) => {

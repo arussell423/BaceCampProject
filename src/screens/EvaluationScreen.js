@@ -7,6 +7,7 @@ import {
 import { Text, Slider, Icon, Button } from 'react-native-elements';
 import { auth, db } from '../components/Firebase';
 import { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from 'firebase/firestore';
+import { getCoachPushToken, sendPushNotification } from '../services/notificationService';
 
 // ─── Shared: Star Rating Row ─────────────────────────────────────────────────
 
@@ -349,6 +350,12 @@ export class EvaluationScreen extends Component {
       .then(() => {
         this.setState((prev) => ({ saved: { ...prev.saved, [section]: true } }));
         Alert.alert(' Saved!', `${section.charAt(0).toUpperCase() + section.slice(1)} evaluation saved. Your virtual coach will review it!`);
+        // Notify coach that player submitted an evaluation
+        const playerName = user.displayName || user.email || 'Your player';
+        const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1);
+        getCoachPushToken(user.email)
+          .then((token) => sendPushNotification(token, 'New Evaluation Submitted', `${playerName} submitted their ${sectionLabel} evaluation`))
+          .catch(() => {});
       })
       .catch(() => Alert.alert('Error', 'Could not save. Please check your connection.'));
   };

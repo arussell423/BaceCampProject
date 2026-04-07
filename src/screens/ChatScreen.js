@@ -11,6 +11,7 @@ import {
   collection, query, orderBy, onSnapshot,
   addDoc, serverTimestamp,
 } from 'firebase/firestore';
+import { getCoachPushToken, sendPushNotification } from '../services/notificationService';
 
 export class ChatScreen extends Component {
   state = {
@@ -60,6 +61,11 @@ export class ChatScreen extends Component {
         timestamp: serverTimestamp(),
         read: false,
       });
+      // Notify the coach that a player sent a message
+      const playerEmail = auth.currentUser?.email;
+      getCoachPushToken(playerEmail)
+        .then((token) => sendPushNotification(token, 'New Message', `${this.displayName}: ${text}`))
+        .catch(() => {});
     } catch (e) {
       // silently fail — message stays in input if needed
     }

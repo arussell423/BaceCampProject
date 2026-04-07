@@ -7,6 +7,7 @@ import {
 import { Text, Icon } from 'react-native-elements';
 import { auth, db } from '../../components/Firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getPlayerPushToken, sendPushNotification } from '../../services/notificationService';
 
 const CATEGORIES = ['Speed', 'Strength', 'Power', 'Mobility', 'Flexibility'];
 
@@ -49,6 +50,10 @@ export class CoachAddTrainingScreen extends Component {
       Alert.alert('Success', 'Training added for player!');
       this.setState({ title: '', description: '', videoUrl: '', saving: false, saved: true });
       setTimeout(() => this.setState({ saved: false }), 3000);
+      // Notify player that coach added a training session
+      getPlayerPushToken(this.playerUid)
+        .then((token) => sendPushNotification(token, 'New Training Plan', `Your coach added a new ${category} session: ${title.trim()}`))
+        .catch(() => {});
     } catch (e) {
       Alert.alert('Error', 'Could not add training.');
       this.setState({ saving: false });

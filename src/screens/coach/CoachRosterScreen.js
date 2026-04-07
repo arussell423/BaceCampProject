@@ -67,6 +67,9 @@ export class CoachRosterScreen extends Component {
         invited: true,
         timestamp: serverTimestamp(),
       });
+      // Allow player-to-coach push notification lookup
+      const playerCoachRef = doc(db, 'playerCoach', sanitizedEmail);
+      batch.set(playerCoachRef, { coachUid: user.uid }, { merge: true });
       await batch.commit();
       this.setState({ showInviteModal: false, inviteEmail: '' });
       Alert.alert('Invite Sent', `Invite sent to ${inviteEmail}`);
