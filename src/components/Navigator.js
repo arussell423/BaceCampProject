@@ -49,7 +49,11 @@ function TabIcon({ name, type, focused }) {
   const size  = focused ? 24 : 22;
   const IconComponent = type === 'material-community' ? MaterialCommunityIcons : MaterialIcons;
   return (
-    <View style={focused ? tabStyles.iconWrapActive : tabStyles.iconWrap}>
+    <View style={{
+      width: 40, height: 32, alignItems: 'center', justifyContent: 'center',
+      borderRadius: 12,
+      backgroundColor: focused ? '#E8F5E9' : 'transparent',
+    }}>
       <IconComponent name={name} size={size} color={color} />
     </View>
   );
@@ -111,9 +115,19 @@ function PlayerTabNavigator() {
         headerShown: false,
         tabBarActiveTintColor: '#006400',
         tabBarInactiveTintColor: '#9E9E9E',
-        tabBarStyle: tabStyles.tabBar,
-        tabBarLabelStyle: tabStyles.tabLabel,
-        tabBarItemStyle: tabStyles.tabItem,
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 0,
+          height: 68,
+          paddingBottom: 8,
+          paddingTop: 6,
+          shadowColor: '#000',
+          shadowOpacity: 0.10,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: -4 },
+        },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 2 },
+        tabBarItemStyle: { paddingTop: 2 },
       }}
     >
       <Tab.Screen
