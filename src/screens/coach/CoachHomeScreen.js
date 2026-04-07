@@ -1,19 +1,20 @@
 import React, { Component } from 'react';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, ActivityIndicator, Alert,
+  ScrollView, ActivityIndicator, Alert, Image, StatusBar,
 } from 'react-native';
 import { Text, Icon, Avatar } from 'react-native-elements';
 import { auth, db } from '../../components/Firebase';
 import { doc, getDoc, collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 
 const NAV_CARDS = [
-  { label: 'My Players', icon: 'people', screen: 'CoachRosterScreen', color: '#4CAF50' },
-  { label: 'Add Training', icon: 'fitness-center', screen: 'CoachRosterScreen', color: '#2196F3' },
-  { label: 'Send Feedback', icon: 'feedback', screen: 'CoachRosterScreen', color: '#FF9800' },
-  { label: 'Schedule', icon: 'event', screen: 'CoachCalendarScreen', color: '#9C27B0' },
-  { label: 'Dashboard', icon: 'bar-chart', screen: 'CoachDashboardScreen', color: '#F44336' },
-  { label: 'Profile', icon: 'person', screen: 'ProfileScreen', color: '#008000' },
+  { label: 'My Players',    icon: 'account-group',      type: 'material-community', screen: 'CoachRosterScreen',   color: '#1B5E20', bg: '#E8F5E9' },
+  { label: 'Add Training',  icon: 'dumbbell',            type: 'material-community', screen: 'CoachRosterScreen',   color: '#0D47A1', bg: '#E3F2FD' },
+  { label: 'Send Feedback', icon: 'comment-text-outline', type: 'material-community', screen: 'CoachRosterScreen',   color: '#E65100', bg: '#FFF3E0' },
+  { label: 'Schedule',      icon: 'calendar-month',      type: 'material-community', screen: 'CoachCalendarScreen', color: '#4A148C', bg: '#F3E5F5' },
+  { label: 'Dashboard',     icon: 'chart-line',          type: 'material-community', screen: 'CoachDashboardScreen', color: '#B71C1C', bg: '#FFEBEE' },
+  { label: 'Profile',       icon: 'account-circle',      type: 'material-community', screen: 'ProfileScreen',       color: '#37474F', bg: '#ECEFF1' },
 ];
 
 export class CoachHomeScreen extends Component {
@@ -67,63 +68,90 @@ export class CoachHomeScreen extends Component {
 
     return (
       <SafeAreaView style={styles.safeArea}>
-        {/* Header */}
-        <View style={styles.headerBar}>
-          <View>
-            <Text style={styles.appTitle}>bACE CAMP Coach</Text>
-          </View>
-          <Avatar
-            rounded
-            title={initials}
-            size="medium"
-            containerStyle={{ backgroundColor: '#008000' }}
-          />
-        </View>
+        <StatusBar barStyle="light-content" backgroundColor="#004d00" />
 
         {loading ? (
           <ActivityIndicator size="large" color="#008000" style={{ marginTop: 60 }} />
         ) : (
-          <ScrollView contentContainerStyle={styles.container}>
-            {/* Welcome */}
-            <Text style={styles.welcomeText}>Welcome, {coachName}</Text>
+          <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 
-            {/* Alert banner */}
+            {/* ── Branded hero ──────────────────────────────────── */}
+            <View style={styles.hero}>
+              <Image
+                source={require('../../assets/image/bACE_CAMP-logo-light.png')}
+                style={styles.heroLogo}
+                resizeMode="contain"
+              />
+              <View style={styles.heroRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.heroGreeting}>Welcome back,</Text>
+                  <Text style={styles.heroName}>{coachName}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => this.props.navigation.navigate('ProfileScreen')}
+                  style={styles.avatarWrap}
+                >
+                  <Avatar
+                    rounded
+                    title={initials}
+                    size={46}
+                    containerStyle={styles.avatar}
+                  />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.roleBadge}>
+                <Text style={styles.roleText}>Head Coach</Text>
+              </View>
+            </View>
+
+            {/* ── Alert banner ──────────────────────────────────── */}
             {newEvalCount > 0 && (
               <View style={styles.alertBanner}>
-                <Icon name="alert-circle-outline" type="material-community" size={18} color="#856404" style={{ marginRight: 8 }} />
+                <Icon name="bell-ring-outline" type="material-community" size={18} color="#856404" />
                 <Text style={styles.alertText}>
-                  {newEvalCount} player(s) submitted new evaluations
+                  {'  '}{newEvalCount} player{newEvalCount > 1 ? 's' : ''} submitted new evaluations
                 </Text>
               </View>
             )}
 
-            {/* Stats bar */}
+            {/* ── Stats row ─────────────────────────────────────── */}
             <View style={styles.statsRow}>
-              <View style={styles.statCard}>
-                <Text style={styles.statNum}>{playerCount}</Text>
-                <Text style={styles.statLabel}>Players</Text>
+              <View style={[styles.statCard, { backgroundColor: '#E8F5E9' }]}>
+                <Text style={[styles.statNum, { color: '#1B5E20' }]}>{playerCount}</Text>
+                <Text style={[styles.statLabel, { color: '#2E7D32' }]}>Players</Text>
               </View>
-              <View style={styles.statCard}>
-                <Text style={[styles.statNum, { color: newEvalCount > 0 ? '#F44336' : '#008000' }]}>
+              <View style={[styles.statCard, { backgroundColor: newEvalCount > 0 ? '#FFF3E0' : '#ECEFF1' }]}>
+                <Text style={[styles.statNum, { color: newEvalCount > 0 ? '#E65100' : '#455A64' }]}>
                   {newEvalCount}
                 </Text>
-                <Text style={styles.statLabel}>New Evals</Text>
+                <Text style={[styles.statLabel, { color: newEvalCount > 0 ? '#BF360C' : '#607D8B' }]}>New Evals</Text>
               </View>
             </View>
 
-            {/* Nav grid */}
+            {/* ── Nav grid ──────────────────────────────────────── */}
+            <Text style={styles.sectionTitle}>Quick Access</Text>
             <View style={styles.grid}>
               {NAV_CARDS.map((card) => (
                 <TouchableOpacity
                   key={card.label}
-                  style={[styles.card, { borderTopColor: card.color }]}
+                  style={[styles.card, { backgroundColor: card.bg }]}
                   onPress={() => this.props.navigation.navigate(card.screen)}
+                  activeOpacity={0.75}
                 >
-                  <Icon name={card.icon} type="material" size={34} color={card.color} />
-                  <Text style={styles.cardLabel}>{card.label}</Text>
+                  <View style={[styles.iconCircle, { backgroundColor: card.color }]}>
+                    <Icon name={card.icon} type={card.type || 'material'} size={24} color="#fff" />
+                  </View>
+                  <Text style={[styles.cardLabel, { color: card.color }]}>{card.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
+
+            {/* ── Sign out ──────────────────────────────────────── */}
+            <TouchableOpacity style={styles.logoutBtn} onPress={() => signOut(auth)}>
+              <Icon name="logout" type="material-community" size={15} color="#999" />
+              <Text style={styles.logoutText}>  Sign Out</Text>
+            </TouchableOpacity>
+
           </ScrollView>
         )}
       </SafeAreaView>
@@ -132,35 +160,62 @@ export class CoachHomeScreen extends Component {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F4F6FA' },
-  headerBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, backgroundColor: '#008000',
+  safeArea: { flex: 1, backgroundColor: '#F0F2F5' },
+  container: { paddingBottom: 40 },
+
+  // Hero — mirrors player HomeScreen
+  hero: {
+    backgroundColor: '#004d00',
+    paddingTop: 20, paddingHorizontal: 20, paddingBottom: 28,
+    borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
   },
-  appTitle: { color: 'white', fontSize: 20, fontWeight: 'bold' },
-  container: { padding: 20, paddingBottom: 40 },
-  welcomeText: { fontSize: 22, fontWeight: 'bold', color: '#222', marginBottom: 16 },
+  heroLogo: { width: 160, height: 52, marginBottom: 18 },
+  heroRow: { flexDirection: 'row', alignItems: 'center' },
+  heroGreeting: { color: '#A5D6A7', fontSize: 13, fontWeight: '500' },
+  heroName: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 },
+  avatarWrap: { marginLeft: 12 },
+  avatar: { backgroundColor: '#2E7D32', borderWidth: 2, borderColor: '#A5D6A7' },
+  roleBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'flex-start',
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4, marginTop: 14,
+  },
+  roleText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+
+  // Alert
   alertBanner: {
-    backgroundColor: '#FFF3E0', borderRadius: 12, padding: 14,
-    marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#FF9800',
     flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#FFF8E1', borderRadius: 12, padding: 14,
+    marginHorizontal: 20, marginTop: 16,
+    borderLeftWidth: 4, borderLeftColor: '#FFC107',
   },
-  alertText: { color: '#E65100', fontWeight: '600', fontSize: 14 },
-  statsRow: { flexDirection: 'row', marginBottom: 24 },
+  alertText: { color: '#5D4037', fontWeight: '600', fontSize: 13 },
+
+  // Stats
+  statsRow: { flexDirection: 'row', paddingHorizontal: 16, marginTop: 16, marginBottom: 8 },
   statCard: {
-    flex: 1, backgroundColor: 'white', borderRadius: 14, padding: 20,
-    alignItems: 'center', marginHorizontal: 6, elevation: 2,
+    flex: 1, borderRadius: 16, padding: 20,
+    alignItems: 'center', marginHorizontal: 4,
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  statNum: { fontSize: 36, fontWeight: 'bold', color: '#008000' },
-  statLabel: { fontSize: 13, color: '#666', marginTop: 4 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  statNum: { fontSize: 42, fontWeight: '800' },
+  statLabel: { fontSize: 12, fontWeight: '600', marginTop: 2 },
+
+  // Grid
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A1A', marginHorizontal: 20, marginTop: 20, marginBottom: 12 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12 },
   card: {
-    width: '47%', backgroundColor: 'white', borderRadius: 14, padding: 20,
-    alignItems: 'center', marginBottom: 16, borderTopWidth: 4,
-    elevation: 2, shadowColor: '#000', shadowOpacity: 0.07, shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    width: '44%', borderRadius: 16, padding: 18, margin: '3%',
+    alignItems: 'center',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 }, elevation: 2,
   },
-  cardLabel: { marginTop: 10, fontWeight: '600', fontSize: 13, color: '#333', textAlign: 'center' },
+  iconCircle: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
+  cardLabel: { fontSize: 13, fontWeight: '700', textAlign: 'center' },
+
+  // Sign out
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 24, marginBottom: 8 },
+  logoutText: { color: '#999', fontSize: 14 },
 });
 
 export default CoachHomeScreen;
