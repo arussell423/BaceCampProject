@@ -29,7 +29,7 @@ export function AppHeader({ navigation, title, homeScreen }) {
         activeOpacity={0.7}
       >
         <Image
-          source={require('../assets/image/bACE_CAMP-logo.png')}
+          source={require('../assets/image/bACE_CAMP-logo-transparent.png')}
           style={styles.logo}
           resizeMode="contain"
         />

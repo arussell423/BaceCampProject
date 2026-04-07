@@ -65,8 +65,8 @@ export class PasswordInputScreen extends Component {
           <View style={styles.headerContainer}>
           <Image
             style={styles.logo}
-            source={require('../assets/image/bACE_CAMP-logo.png')}
-        />
+            source={require('../assets/image/bACE_CAMP-logo-transparent.png')}
+          />
             <Text h4 style={{textAlign: 'center'}}>
                                 Now let's setup your password
             </Text>

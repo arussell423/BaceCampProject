@@ -53,7 +53,7 @@ export class HomeScreen extends Component {
 
           <View style={styles.hero}>
             <Image
-              source={require('../assets/image/bACE_CAMP-logo.png')}
+              source={require('../assets/image/bACE_CAMP-logo-light.png')}
               style={styles.logo}
               resizeMode="contain"
             />

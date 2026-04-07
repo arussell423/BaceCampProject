@@ -31,10 +31,10 @@ export class SelectProfileScreen extends Component {
     return (
       <View style={styles.container}>
         <Image
-          source={require('../assets/image/bACE_CAMP-logo.png')}
+          source={require('../assets/image/bACE_CAMP-logo-transparent.png')}
           style={styles.logo}
+          resizeMode="contain"
         />
-        <Text h4 style={styles.title}>Who are you?</Text>
         <Text style={styles.subtitle}>Select your profile type. You can switch roles later in your Profile settings.</Text>
 
         {saving ? (

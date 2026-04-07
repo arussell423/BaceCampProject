@@ -1,23 +1,18 @@
 import React, {Component} from 'react';
 import {
-View,
-StyleSheet,
-Platform,
-Alert,
-ActivityIndicator,
-TouchableOpacity,
-KeyboardAvoidingView,
-ScrollView,
+  View, StyleSheet, Platform, Alert, ActivityIndicator,
+  TouchableOpacity, KeyboardAvoidingView, ScrollView,
+  StatusBar, Image, Dimensions,
 } from 'react-native';
-import { Text, Icon, Input, Button, SocialIcon, Image } from 'react-native-elements';
+import { Text, Icon, Input, Button, SocialIcon } from 'react-native-elements';
 import { auth } from '../components/Firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
 
+const SCREEN_H = Dimensions.get('window').height;
 
 export class LoginScreen extends Component {
-
 
     Login = (values) => {
         signInWithEmailAndPassword(auth, values.email, values.password)
@@ -31,119 +26,117 @@ export class LoginScreen extends Component {
     
     render() {
         return (
-            
-            <ScrollView contentContainerStyle={styles.contentContainer}
-        keyboardShouldPersistTaps="handled">
-            <View style={styles.container}>             
-<KeyboardAvoidingView
-    behavior={'padding'}
-                enabled
-                 keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 84}>
-<Formik
-         initialValues={{email: '', password: ''}}
-         onSubmit={(values, {setSubmitting}) => {
-           this.Login(values);
-           setSubmitting(false);
-         }}
-         validationSchema={LoginSchema}>
-         {formikProps => (
-        <React.Fragment>
-        <View style={styles.headerContainer}>
-        <Image
-            style={styles.logo}
-            source={require('../assets/image/bACE_CAMP-logo.png')}
-        />
-                    </View>
-             <View style={styles.wrapper}>
-               <Input
-                 leftIcon={
-                   <Icon
-                     name="md-mail"
-                     type="ionicon"
-                     color="#87cefa"
-                     size={25}
-                   />
-                 }
-                 onChangeText={formikProps.handleChange('email')}
-                 placeholder="Email"
-                 inputContainerStyle={styles.input}
-                 placeholderTextColor="grey"
-                autoCapitalize="none"
-                secureTextEntry={false}
-                 autoCorrect={false}
-                 keyboardType="email-address"
-                 returnKeyType="next"
-               />
-               {formikProps.errors.email ? (
-                 <Text style={{color: 'red'}}>
-                   {formikProps.errors.email}
-                 </Text>
-               ) : null}
-               <Input
-                 leftIcon={
-                   <Icon
-                     name="lock"
-                     color="#87cefa"
-                     size={25}
-                   />
-                 }
-                 onChangeText={formikProps.handleChange('password')}
-                 inputContainerStyle={styles.input}
-                 placeholderTextColor="grey"
-                 placeholder="Password"
-                 autoCapitalize="none"
-                 secureTextEntry={true}
-                 autoCorrect={false}
-                 keyboardType="default"
-                 returnKeyType="next"
-               />
-               {formikProps.errors.password ? (
-                 <Text style={{color: 'red'}}>
-                   {formikProps.errors.password}
-                 </Text>
-               ) : null}
-             </View>
-             <View style={styles.socialWrapper}>
-               <Text style={styles.signinwith}>Sign in with</Text>
-               <View style={styles.socialLogin}>
-                 <SocialIcon type="facebook" light onPress={() => Alert.alert('Coming Soon', 'Facebook sign-in is not yet available.')} />
-                 <SocialIcon type="google" light onPress={() => Alert.alert('Coming Soon', 'Google sign-in is not yet available.')} />
-                 <SocialIcon type="twitter" light onPress={() => Alert.alert('Coming Soon', 'Twitter sign-in is not yet available.')} />
-               </View>
-               <Button
-                 title="Login"
-                 loading={false}
-                 loadingProps={{size: 'small', color: 'white'}}
-                 buttonStyle={{
-                   backgroundColor: '#008000',
-                   borderRadius: 15,
-                 }}
-                 titleStyle={{fontWeight: 'bold', fontSize: 23}}
-                 containerStyle={{
-                   marginVertical: 10,
-                   height: 50,
-                   width: 300,
-                 }}
-                 onPress={formikProps.handleSubmit}
-                 disabled={!(formikProps.isValid && formikProps.dirty)}
-                 underlayColor="transparent"
-               />
-               <TouchableOpacity
-                 onPress={() =>
-                   Alert.alert('Forgot Password', 'Please re-register or contact support.')
-                 }>
-                 <Text h5 style={{textAlign: 'center', color: 'blue'}}>
-                   Forgot Password?
-                 </Text>
-               </TouchableOpacity>
-             </View>
-           </React.Fragment>
-         )}
-                    </Formik>         
-    </KeyboardAvoidingView>               
-                </View>
-                </ScrollView>
-        )
+          <View style={styles.root}>
+            <StatusBar barStyle="light-content" backgroundColor="#004d00" />
+
+            {/* ── Branded hero ───────────────────────────── */}
+            <View style={styles.hero}>
+              <Image
+                source={require('../assets/image/bACE_CAMP-logo-light.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+              <Text style={styles.tagline}>Train Smart. Play Hard. Win.</Text>
+            </View>
+
+            {/* ── Form card ─────────────────────────────── */}
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+              style={styles.cardWrap}
+            >
+              <ScrollView
+                contentContainerStyle={styles.card}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                <Text style={styles.cardTitle}>Sign in to your account</Text>
+
+                <Formik
+                  initialValues={{email: '', password: ''}}
+                  onSubmit={(values, {setSubmitting}) => {
+                    this.Login(values);
+                    setSubmitting(false);
+                  }}
+                  validationSchema={LoginSchema}>
+                  {formikProps => (
+                    <>
+                      <Input
+                        leftIcon={<Icon name="email-outline" type="material-community" color="#008000" size={20} />}
+                        onChangeText={formikProps.handleChange('email')}
+                        placeholder="Email address"
+                        inputContainerStyle={styles.inputContainer}
+                        inputStyle={styles.inputText}
+                        placeholderTextColor="#aaa"
+                        autoCapitalize="none"
+                        secureTextEntry={false}
+                        autoCorrect={false}
+                        keyboardType="email-address"
+                        returnKeyType="next"
+                        errorMessage={formikProps.errors.email}
+                        errorStyle={styles.errorText}
+                      />
+
+                      <Input
+                        leftIcon={<Icon name="lock-outline" type="material-community" color="#008000" size={20} />}
+                        onChangeText={formikProps.handleChange('password')}
+                        inputContainerStyle={styles.inputContainer}
+                        inputStyle={styles.inputText}
+                        placeholderTextColor="#aaa"
+                        placeholder="Password"
+                        autoCapitalize="none"
+                        secureTextEntry={true}
+                        autoCorrect={false}
+                        keyboardType="default"
+                        returnKeyType="done"
+                        onSubmitEditing={formikProps.handleSubmit}
+                        errorMessage={formikProps.errors.password}
+                        errorStyle={styles.errorText}
+                      />
+
+                      <TouchableOpacity
+                        onPress={() => Alert.alert('Forgot Password', 'Please contact your coach or re-register.')}
+                        style={styles.forgotWrap}
+                      >
+                        <Text style={styles.forgotText}>Forgot Password?</Text>
+                      </TouchableOpacity>
+
+                      <Button
+                        title="Sign In"
+                        loading={formikProps.isSubmitting}
+                        loadingProps={{ size: 'small', color: 'white' }}
+                        buttonStyle={styles.loginBtn}
+                        titleStyle={styles.loginBtnTitle}
+                        containerStyle={styles.loginBtnContainer}
+                        onPress={formikProps.handleSubmit}
+                        disabled={!(formikProps.isValid && formikProps.dirty)}
+                      />
+
+                      <View style={styles.dividerRow}>
+                        <View style={styles.divider} />
+                        <Text style={styles.dividerText}>or continue with</Text>
+                        <View style={styles.divider} />
+                      </View>
+
+                      <View style={styles.socialRow}>
+                        <SocialIcon type="google"   light rounded onPress={() => Alert.alert('Coming Soon', 'Google sign-in is coming soon.')} />
+                        <SocialIcon type="facebook" light rounded onPress={() => Alert.alert('Coming Soon', 'Facebook sign-in is coming soon.')} />
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => this.props.navigation.navigate('PasswordInputScreen')}
+                        style={styles.registerWrap}
+                      >
+                        <Text style={styles.registerText}>
+                          New to bACE CAMP? <Text style={styles.registerLink}>Create account</Text>
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </Formik>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </View>
+        );
     }
 }
 
@@ -151,7 +144,7 @@ export class LoginScreen extends Component {
 const LoginSchema = Yup.object().shape({
     email: Yup.string()
       .email('Invalid email')
-      .required('Email is Required'),
+      .required('Email is required'),
     password: Yup.string()
       .required('Password is required')
       .min(6, 'Password must be at least 6 characters'),
@@ -159,50 +152,59 @@ const LoginSchema = Yup.object().shape({
 
 
 const styles = StyleSheet.create({
-    container: {
-        backgroundColor: '#F4F6FA',
-        height: '100%',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    contentContainer: {
-        paddingVertical: 20,
-      },
-    headerContainer: {
-        marginTop: 200,
-        top: 300,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 100,
-        marginBottom: 250,
-    },
-    logo: {
-        width: 100,
-        height: 200,
-        padding: 10,
-        marginBottom: 10,
-    },
-    wrapper:{
-    },
-    input: {
-    borderWidth: 1,
-    borderColor: 'white',
-    borderLeftWidth: 10,
-    borderRightWidth: 300,
-    height: 50,
-    backgroundColor: 'white',
-    marginBottom: 10,
-    },
-    socialWrapper: {
-        marginTop: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    socialLogin: {
-        flexDirection: 'row',
-        marginTop: 10,
-    },
+  root: { flex: 1, backgroundColor: '#fff' },
+
+  // Hero
+  hero: {
+    height: SCREEN_H * 0.32,
+    backgroundColor: '#004d00',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 20,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+  },
+  logo: { width: 180, height: 64, marginBottom: 10 },
+  tagline: { color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500', letterSpacing: 0.5 },
+
+  // Card
+  cardWrap: { flex: 1 },
+  card: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 40 },
+  cardTitle: { fontSize: 20, fontWeight: '700', color: '#1A1A1A', marginBottom: 20 },
+
+  // Inputs
+  inputContainer: {
+    borderWidth: 1, borderColor: '#ddd', borderRadius: 12,
+    paddingHorizontal: 10, backgroundColor: '#FAFAFA', marginBottom: 2,
+  },
+  inputText: { fontSize: 15, color: '#222' },
+  errorText: { color: '#E53935', fontSize: 12 },
+
+  // Forgot password
+  forgotWrap: { alignSelf: 'flex-end', marginBottom: 20, marginTop: -4 },
+  forgotText: { color: '#008000', fontSize: 13, fontWeight: '600' },
+
+  // Login button
+  loginBtnContainer: { marginBottom: 20 },
+  loginBtn: {
+    backgroundColor: '#006400', borderRadius: 14, paddingVertical: 14,
+  },
+  loginBtnTitle: { fontSize: 16, fontWeight: '700', letterSpacing: 0.4 },
+
+  // Divider
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  divider: { flex: 1, height: 1, backgroundColor: '#eee' },
+  dividerText: { marginHorizontal: 12, color: '#aaa', fontSize: 12 },
+
+  // Social
+  socialRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 20 },
+
+  // Register
+  registerWrap: { alignItems: 'center' },
+  registerText: { color: '#888', fontSize: 13 },
+  registerLink: { color: '#006400', fontWeight: '700' },
 });
 
 
-export default LoginScreen
+export default LoginScreen;
+

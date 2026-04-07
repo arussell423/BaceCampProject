@@ -51,7 +51,7 @@ export class IntroScreen extends Component {
             </Text>
                     </View>
                     <Image
-                source={require('../assets/image/bACE_CAMP-logo.png')}
+                source={require('../assets/image/bACE_CAMP-logo-transparent.png')}
                 style={{width: '100%', height: 300}}
                 PlaceholderContent={<ActivityIndicator />}
                     />

@@ -38,8 +38,8 @@ export class EmailInputScreen extends Component {
         <View style={styles.headerContainer}>
           <Image
             style={styles.logo}
-            source={require('../assets/image/bACE_CAMP-logo.png')}
-        />
+            source={require('../assets/image/bACE_CAMP-logo-transparent.png')}
+          />
                                 <Text h4 style={{ textAlign: 'center' }}>
                                     What is your E-mail address?
                                 </Text>

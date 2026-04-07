@@ -29,7 +29,7 @@ export class onBoardScreen extends Component {
       <View style={styles.container}>
         {/* Hero logo — large and prominent */}
         <Image
-          source={require("../assets/image/bACE_CAMP-logo.png")}
+          source={require("../assets/image/bACE_CAMP-logo-transparent.png")}
           style={styles.heroLogo}
           resizeMode="contain"
         />
