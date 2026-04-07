@@ -9,14 +9,14 @@ import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 const NAV_ITEMS = [
-  { label: 'Evaluation',   icon: 'clipboard-list',  type: 'material-community', screen: 'EvaluationScreen',    color: '#1B5E20', bg: '#E8F5E9' },
-  { label: 'Training',     icon: 'dumbbell',        type: 'material-community', screen: 'TrainingScreen',      color: '#0D47A1', bg: '#E3F2FD' },
-  { label: 'Schedule',     icon: 'calendar-month',  type: 'material-community', screen: 'ScheduleScreen',      color: '#E65100', bg: '#FFF3E0' },
-  { label: 'Dashboard',    icon: 'chart-bar',       type: 'material-community', screen: 'DashboardScreen',     color: '#4A148C', bg: '#F3E5F5' },
-  { label: 'Match Report', icon: 'file-document',   type: 'material-community', screen: 'MatchReportScreen',   color: '#B71C1C', bg: '#FFEBEE' },
-  { label: 'Speed Drills', icon: 'timer-outline',   type: 'material-community', screen: 'SpeedTrackingScreen', color: '#006064', bg: '#E0F7FA' },
-  { label: 'AI Coach',     icon: 'robot-outline',   type: 'material-community', screen: 'AICoachScreen',       color: '#33691E', bg: '#F1F8E9' },
-  { label: 'Profile',      icon: 'account-circle',  type: 'material-community', screen: 'ProfileScreen',       color: '#37474F', bg: '#ECEFF1' },
+  { label: 'Evaluation',   icon: 'clipboard-list',  type: 'material-community', tab: 'Evaluation',  screen: 'EvaluationScreen',    color: '#1B5E20', bg: '#E8F5E9' },
+  { label: 'Training',     icon: 'dumbbell',        type: 'material-community', tab: 'Training',    screen: 'TrainingScreen',      color: '#0D47A1', bg: '#E3F2FD' },
+  { label: 'Schedule',     icon: 'calendar-month',  type: 'material-community', tab: 'Schedule',    screen: 'ScheduleScreen',      color: '#E65100', bg: '#FFF3E0' },
+  { label: 'Dashboard',    icon: 'chart-bar',       type: 'material-community', tab: null,          screen: 'DashboardScreen',     color: '#4A148C', bg: '#F3E5F5' },
+  { label: 'Match Report', icon: 'file-document',   type: 'material-community', tab: null,          screen: 'MatchReportScreen',   color: '#B71C1C', bg: '#FFEBEE' },
+  { label: 'Speed Drills', icon: 'timer-outline',   type: 'material-community', tab: null,          screen: 'SpeedTrackingScreen', color: '#006064', bg: '#E0F7FA' },
+  { label: 'AI Coach',     icon: 'robot-outline',   type: 'material-community', tab: null,          screen: 'AICoachScreen',       color: '#33691E', bg: '#F1F8E9' },
+  { label: 'Profile',      icon: 'account-circle',  type: 'material-community', tab: null,          screen: 'ProfileScreen',       color: '#37474F', bg: '#ECEFF1' },
 ];
 
 export class HomeScreen extends Component {
@@ -78,7 +78,13 @@ export class HomeScreen extends Component {
               <TouchableOpacity
                 key={item.label}
                 style={[styles.card, { backgroundColor: item.bg }]}
-                onPress={() => this.props.navigation.navigate(item.screen)}
+                onPress={() => {
+                    if (item.tab) {
+                      this.props.navigation.navigate(item.tab);
+                    } else {
+                      this.props.navigation.navigate(item.screen);
+                    }
+                  }}
                 activeOpacity={0.75}
               >
                 <View style={[styles.iconCircle, { backgroundColor: item.color }]}>

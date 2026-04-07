@@ -2,13 +2,16 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, TextInput,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
-import { db } from '../../components/Firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { auth, db } from '../../components/Firebase';
+import {
+  collection, query, orderBy, limit, getDocs,
+  addDoc, serverTimestamp, onSnapshot,
+} from 'firebase/firestore';
 
-const TABS = ['Performance', 'Training', 'History'];
+const TABS = ['Performance', 'Training', 'Chat', 'History'];
 
 const MetricBar = ({ label, score, colour }) => (
   <View style={styles.metricRow}>
@@ -25,13 +28,50 @@ export class CoachPlayerDetailScreen extends Component {
     activeTab: 0,
     evaluations: [],
     trainingPlans: [],
+    chatMessages: [],
+    chatInput: '',
     loading: true,
     perfScores: { Speed: 0, Strength: 0, Power: 0 },
   };
 
   componentDidMount() {
     this.loadData();
+    this.subscribeChat();
   }
+
+  componentWillUnmount() {
+    if (this._chatUnsub) this._chatUnsub();
+  }
+
+  subscribeChat = () => {
+    const uid = this.playerUid;
+    if (!uid) return;
+    this._chatUnsub = onSnapshot(
+      query(collection(db, 'chats', uid, 'messages'), orderBy('timestamp', 'asc')),
+      (snap) => {
+        const chatMessages = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        this.setState({ chatMessages });
+      }
+    );
+  };
+
+  sendChatReply = async () => {
+    const { chatInput } = this.state;
+    const text = chatInput.trim();
+    if (!text) return;
+    this.setState({ chatInput: '' });
+    const coachUser = auth.currentUser;
+    try {
+      await addDoc(collection(db, 'chats', this.playerUid, 'messages'), {
+        text,
+        senderUid: coachUser?.uid || '',
+        senderName: coachUser?.displayName || coachUser?.email || 'Coach',
+        fromRole: 'coach',
+        timestamp: serverTimestamp(),
+        read: false,
+      });
+    } catch (e) { /* silently fail */ }
+  };
 
   get playerUid() {
     return this.props.route?.params?.playerUid ?? '';
@@ -116,8 +156,53 @@ export class CoachPlayerDetailScreen extends Component {
     );
   }
 
-  renderHistory() {
-    const { evaluations } = this.state;
+  renderChat() {
+    const { chatMessages, chatInput } = this.state;
+    return (
+      <View style={[styles.tabContent, { flex: 1 }]}>
+        <ScrollView style={{ flex: 1 }}>
+          {chatMessages.length === 0 ? (
+            <Text style={styles.emptyText}>No messages yet from this player.</Text>
+          ) : (
+            chatMessages.map((msg) => {
+              const isCoach = msg.fromRole === 'coach';
+              return (
+                <View key={msg.id} style={[styles.chatBubbleRow, isCoach && { justifyContent: 'flex-end' }]}>
+                  <View style={[styles.chatBubble, isCoach ? styles.chatBubbleCoach : styles.chatBubblePlayer]}>
+                    <Text style={[styles.chatBubbleText, isCoach && { color: 'white' }]}>{msg.text}</Text>
+                    <Text style={[styles.chatTime, isCoach && { color: 'rgba(255,255,255,0.7)' }]}>
+                      {msg.fromRole === 'coach' ? 'You' : msg.senderName || 'Player'}
+                      {msg.timestamp?.toDate ? `  ${msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </ScrollView>
+        <View style={styles.chatInputRow}>
+          <TextInput
+            style={styles.chatInput}
+            value={chatInput}
+            onChangeText={(t) => this.setState({ chatInput: t })}
+            placeholder="Reply to player..."
+            placeholderTextColor="#aaa"
+            multiline
+            maxLength={500}
+          />
+          <TouchableOpacity
+            style={[styles.chatSendBtn, !chatInput.trim() && { backgroundColor: '#ccc' }]}
+            onPress={this.sendChatReply}
+            disabled={!chatInput.trim()}
+          >
+            <Icon name="send" type="material" color="white" size={18} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  renderHistory() {    const { evaluations } = this.state;
     return (
       <View style={styles.tabContent}>
         {evaluations.length === 0 ? (
@@ -163,7 +248,8 @@ export class CoachPlayerDetailScreen extends Component {
           <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
             {activeTab === 0 && this.renderPerformance()}
             {activeTab === 1 && this.renderTraining()}
-            {activeTab === 2 && this.renderHistory()}
+            {activeTab === 2 && this.renderChat()}
+            {activeTab === 3 && this.renderHistory()}
           </ScrollView>
         )}
 
@@ -222,6 +308,24 @@ const styles = StyleSheet.create({
   barFill: { height: 10, borderRadius: 5 },
   metricScore: { width: 30, textAlign: 'right', fontWeight: 'bold', fontSize: 13 },
   emptyText: { color: '#aaa', fontSize: 15, textAlign: 'center', marginTop: 40 },
+  chatBubbleRow: { flexDirection: 'row', marginBottom: 10 },
+  chatBubble: { maxWidth: '75%', borderRadius: 14, padding: 10 },
+  chatBubblePlayer: { backgroundColor: '#f0f0f0' },
+  chatBubbleCoach: { backgroundColor: '#008000' },
+  chatBubbleText: { fontSize: 14, color: '#222' },
+  chatTime: { fontSize: 10, color: '#aaa', marginTop: 4 },
+  chatInputRow: {
+    flexDirection: 'row', alignItems: 'flex-end', paddingTop: 8,
+    borderTopWidth: 1, borderTopColor: '#eee', marginTop: 8,
+  },
+  chatInput: {
+    flex: 1, backgroundColor: '#F4F6FA', borderRadius: 20, paddingHorizontal: 14,
+    paddingVertical: 10, fontSize: 14, color: '#222', maxHeight: 100,
+  },
+  chatSendBtn: {
+    backgroundColor: '#008000', borderRadius: 22, width: 40, height: 40,
+    alignItems: 'center', justifyContent: 'center', marginLeft: 8,
+  },
   trainingCard: {
     backgroundColor: 'white', borderRadius: 14, padding: 16, marginBottom: 12, elevation: 1,
   },

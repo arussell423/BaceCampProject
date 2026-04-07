@@ -9,7 +9,7 @@ import { doc, getDoc, collection, getDocs, query, where, limit } from 'firebase/
 
 const NAV_CARDS = [
   { label: 'My Players', icon: 'people', screen: 'CoachRosterScreen', color: '#4CAF50' },
-  { label: 'Add Training', icon: 'fitness-center', screen: 'CoachAddTrainingScreen', color: '#2196F3' },
+  { label: 'Add Training', icon: 'fitness-center', screen: 'CoachRosterScreen', color: '#2196F3' },
   { label: 'Send Feedback', icon: 'feedback', screen: 'CoachRosterScreen', color: '#FF9800' },
   { label: 'Schedule', icon: 'event', screen: 'CoachCalendarScreen', color: '#9C27B0' },
   { label: 'Dashboard', icon: 'bar-chart', screen: 'CoachDashboardScreen', color: '#F44336' },

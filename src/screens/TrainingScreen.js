@@ -48,10 +48,21 @@ class WorkoutCard extends Component {
   state = { completed: false, rating: null };
 
   complete = () => {
+    const { workout } = this.props;
     this.setState({ completed: true });
+    // Show motivational message and related workout suggestion
+    const related = Object.values(WORKOUTS).flat().filter(
+      (w) => w.id !== workout.id && w.level === workout.level
+    );
+    const suggestion = related[Math.floor(Math.random() * related.length)];
     setTimeout(() => {
-      // Virtual coach reward
-    }, 500);
+      Alert.alert(
+        '🎉 Great Work!',
+        suggestion
+          ? `Well done on completing "${workout.title}"!\n\nYou might also enjoy:\n"${suggestion.title}" (${suggestion.duration})`
+          : `Well done on completing "${workout.title}"! Keep building that momentum!`
+      );
+    }, 400);
   };
 
   render() {

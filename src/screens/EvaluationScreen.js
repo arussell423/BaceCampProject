@@ -2,36 +2,62 @@ import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, TouchableOpacity,
-  SafeAreaView, Alert,
+  SafeAreaView, Alert, TextInput,
 } from 'react-native';
 import { Text, Slider, Icon, Button } from 'react-native-elements';
 import { auth, db } from '../components/Firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from 'firebase/firestore';
+
+// ─── Shared: Star Rating Row ─────────────────────────────────────────────────
+
+function StarRating({ value, max, onPress, colour }) {
+  return (
+    <View style={{ flexDirection: 'row', marginBottom: 6 }}>
+      {Array.from({ length: max }).map((_, i) => (
+        <TouchableOpacity key={i} onPress={() => onPress(i + 1)} style={{ marginRight: 4 }}>
+          <Icon
+            name={i < value ? 'star' : 'star-outline'}
+            type="material"
+            size={26}
+            color={i < value ? colour : '#ddd'}
+          />
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
 
 // ─── Physical Tab ────────────────────────────────────────────────────────────
 
-const MUSCLE_GROUPS = [
-  'Left Shoulder', 'Right Shoulder',
-  'Left Arm', 'Right Arm',
-  'Upper Back', 'Lower Back',
-  'Core / Abs',
-  'Left Hip', 'Right Hip',
-  'Left Knee', 'Right Knee',
-  'Left Ankle', 'Right Ankle',
+// Body regions grouped anatomically for a structured visual layout
+const BODY_REGIONS = [
+  { section: 'Head & Shoulders', muscles: ['Left Shoulder', 'Right Shoulder'] },
+  { section: 'Arms',             muscles: ['Left Arm', 'Right Arm'] },
+  { section: 'Back',             muscles: ['Upper Back', 'Lower Back'] },
+  { section: 'Core',             muscles: ['Core / Abs'] },
+  { section: 'Hips',             muscles: ['Left Hip', 'Right Hip'] },
+  { section: 'Knees',            muscles: ['Left Knee', 'Right Knee'] },
+  { section: 'Ankles',           muscles: ['Left Ankle', 'Right Ankle'] },
 ];
 
 const BODY_COLOURS = [
-  { label: 'Painful', colour: '#e53935' },
-  { label: 'Achy',    colour: '#43a047' },
-  { label: 'Fatigued',colour: '#fdd835' },
+  { label: 'Painful',  colour: '#e53935' },
+  { label: 'Achy',     colour: '#43a047' },
+  { label: 'Fatigued', colour: '#fdd835' },
 ];
 
 class PhysicalTab extends Component {
-  state = {
-    selectedColour: null,
-    muscleMap: {},  // { muscleName: colourLabel }
-    speed: 3, strength: 3, power: 3,
-  };
+  constructor(props) {
+    super(props);
+    const p = props.prevValues || {};
+    this.state = {
+      selectedColour: null,
+      muscleMap: p.muscleMap || {},
+      speed:    p.speed    || 3,
+      strength: p.strength || 3,
+      power:    p.power    || 3,
+    };
+  }
 
   toggleMuscle = (muscle) => {
     const { selectedColour, muscleMap } = this.state;
@@ -40,11 +66,8 @@ class PhysicalTab extends Component {
       return;
     }
     const updated = { ...muscleMap };
-    if (updated[muscle] === selectedColour) {
-      delete updated[muscle];
-    } else {
-      updated[muscle] = selectedColour;
-    }
+    if (updated[muscle] === selectedColour) delete updated[muscle];
+    else updated[muscle] = selectedColour;
     this.setState({ muscleMap: updated });
   };
 
@@ -52,14 +75,17 @@ class PhysicalTab extends Component {
     const { selectedColour, muscleMap, speed, strength, power } = this.state;
     return (
       <ScrollView contentContainerStyle={styles.tabContent}>
-        {/* Colour selector */}
+
+        {/* ── Body Status ── */}
         <Text style={styles.sectionLabel}>Body Status — select a colour then tap a muscle:</Text>
+
+        {/* Colour selector */}
         <View style={styles.colourRow}>
           {BODY_COLOURS.map((c) => (
             <TouchableOpacity
               key={c.label}
               style={[styles.colourChip, selectedColour === c.label && { borderColor: c.colour, borderWidth: 3 }]}
-              onPress={() => this.setState({ selectedColour: c.label })}
+              onPress={() => this.setState({ selectedColour: selectedColour === c.label ? null : c.label })}
             >
               <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.colour, marginBottom: 4 }} />
               <Text style={{ fontSize: 11, color: '#333' }}>{c.label}</Text>
@@ -67,41 +93,65 @@ class PhysicalTab extends Component {
           ))}
         </View>
 
-        {/* Muscle grid */}
-        <View style={styles.muscleGrid}>
-          {MUSCLE_GROUPS.map((m) => {
-            const assigned = muscleMap[m];
-            const colourObj = BODY_COLOURS.find((c) => c.label === assigned);
-            return (
-              <TouchableOpacity
-                key={m}
-                style={[styles.muscleChip, colourObj && { backgroundColor: colourObj.colour + '33', borderColor: colourObj.colour }]}
-                onPress={() => this.toggleMuscle(m)}
-              >
-                <Text style={styles.muscleText}>{m}</Text>
-              </TouchableOpacity>
-            );
-          })}
+        {/* Body diagram — grouped by region */}
+        <View style={styles.bodyDiagram}>
+          {BODY_REGIONS.map((region) => (
+            <View key={region.section} style={styles.bodyRegion}>
+              <Text style={styles.bodyRegionLabel}>{region.section}</Text>
+              <View style={styles.bodyRegionMuscles}>
+                {region.muscles.map((m) => {
+                  const assigned = muscleMap[m];
+                  const colourObj = BODY_COLOURS.find((c) => c.label === assigned);
+                  return (
+                    <TouchableOpacity
+                      key={m}
+                      style={[
+                        styles.muscleChip,
+                        colourObj && { backgroundColor: colourObj.colour + '33', borderColor: colourObj.colour },
+                        colourObj && { borderWidth: 2 },
+                      ]}
+                      onPress={() => this.toggleMuscle(m)}
+                    >
+                      {colourObj && (
+                        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colourObj.colour, marginRight: 5 }} />
+                      )}
+                      <Text style={styles.muscleText}>{m}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          ))}
         </View>
 
-        {/* Ratings */}
+        {/* ── Performance Ratings ── */}
         <Text style={styles.sectionLabel}>Performance Ratings</Text>
         {[
-          { label: `Speed: ${speed}/5`, key: 'speed', val: speed },
-          { label: `Strength: ${strength}/5`, key: 'strength', val: strength },
-          { label: `Power: ${power}/5`, key: 'power', val: power },
+          { label: 'Speed',    key: 'speed',    val: speed,    colour: '#008000' },
+          { label: 'Strength', key: 'strength', val: strength, colour: '#1565C0' },
+          { label: 'Power',    key: 'power',    val: power,    colour: '#6A1B9A' },
         ].map((item) => (
-          <View key={item.key} style={styles.sliderRow}>
-            <Text style={styles.sliderLabel}>{item.label}</Text>
+          <View key={item.key} style={styles.ratingBlock}>
+            <View style={styles.ratingLabelRow}>
+              <Text style={styles.sliderLabel}>{item.label}</Text>
+              <Text style={[styles.ratingValue, { color: item.colour }]}>{item.val} / 5</Text>
+            </View>
+            <StarRating
+              value={item.val}
+              max={5}
+              colour={item.colour}
+              onPress={(v) => this.setState({ [item.key]: v })}
+            />
             <Slider
               value={item.val}
               onValueChange={(v) => this.setState({ [item.key]: Math.round(v) })}
               minimumValue={1} maximumValue={5} step={1}
-              thumbTintColor="#008000" minimumTrackTintColor="#008000"
+              thumbTintColor={item.colour} minimumTrackTintColor={item.colour}
               style={{ flex: 1 }}
             />
           </View>
         ))}
+
         <Button
           title="Save Physical Evaluation"
           buttonStyle={styles.saveBtn}
@@ -116,18 +166,26 @@ class PhysicalTab extends Component {
 // ─── Tactical Tab ─────────────────────────────────────────────────────────────
 
 class TacticalTab extends Component {
-  state = {
-    unforcedErrors: 5, winners: 5, shotPlacement: 5, shotSelection: 5,
-    gamePlan: '',
-  };
+  constructor(props) {
+    super(props);
+    const p = props.prevValues || {};
+    this.state = {
+      unforcedErrors: p.unforcedErrors || 5,
+      winners:        p.winners        || 5,
+      shotPlacement:  p.shotPlacement  || 5,
+      shotSelection:  p.shotSelection  || 5,
+      gamePlan:       p.gamePlan       || '',
+      preMatchPlanSet: p.preMatchPlanSet || false,
+    };
+  }
 
   render() {
-    const { unforcedErrors, winners, shotPlacement, shotSelection } = this.state;
+    const { unforcedErrors, winners, shotPlacement, shotSelection, gamePlan, preMatchPlanSet } = this.state;
     const metrics = [
       { label: `Unforced Errors: ${unforcedErrors}/10`, key: 'unforcedErrors', val: unforcedErrors },
-      { label: `Winners: ${winners}/10`, key: 'winners', val: winners },
-      { label: `Shot Placement: ${shotPlacement}/10`, key: 'shotPlacement', val: shotPlacement },
-      { label: `Shot Selection: ${shotSelection}/10`, key: 'shotSelection', val: shotSelection },
+      { label: `Winners: ${winners}/10`,                key: 'winners',        val: winners },
+      { label: `Shot Placement: ${shotPlacement}/10`,   key: 'shotPlacement',  val: shotPlacement },
+      { label: `Shot Selection: ${shotSelection}/10`,   key: 'shotSelection',  val: shotSelection },
     ];
     return (
       <ScrollView contentContainerStyle={styles.tabContent}>
@@ -144,11 +202,39 @@ class TacticalTab extends Component {
             />
           </View>
         ))}
+
+        {/* Pre Match Game Plan */}
+        <Text style={styles.sectionLabel}>Pre Match Game Plan</Text>
+        <TouchableOpacity
+          style={styles.checkRow}
+          onPress={() => this.setState((prev) => ({ preMatchPlanSet: !prev.preMatchPlanSet }))}
+        >
+          <Icon
+            name={preMatchPlanSet ? 'check-box' : 'check-box-outline-blank'}
+            type="material"
+            size={24}
+            color={preMatchPlanSet ? '#2196F3' : '#aaa'}
+          />
+          <Text style={[styles.checkLabel, preMatchPlanSet && { color: '#2196F3' }]}>
+            {preMatchPlanSet ? 'Game plan confirmed ✓' : 'Tap to confirm you have a game plan'}
+          </Text>
+        </TouchableOpacity>
+
+        <TextInput
+          style={styles.gamePlanInput}
+          multiline
+          numberOfLines={4}
+          placeholder="Describe your game plan, tactical focus areas, opponent tendencies..."
+          placeholderTextColor="#aaa"
+          value={gamePlan}
+          onChangeText={(t) => this.setState({ gamePlan: t })}
+        />
+
         <Button
           title="Save Tactical Evaluation"
           buttonStyle={[styles.saveBtn, { backgroundColor: '#2196F3' }]}
-          containerStyle={{ marginTop: 20 }}
-          onPress={() => this.props.onSave({ unforcedErrors, winners, shotPlacement, shotSelection })}
+          containerStyle={{ marginTop: 12 }}
+          onPress={() => this.props.onSave({ unforcedErrors, winners, shotPlacement, shotSelection, gamePlan, preMatchPlanSet })}
         />
       </ScrollView>
     );
@@ -158,36 +244,55 @@ class TacticalTab extends Component {
 // ─── Mental Tab ───────────────────────────────────────────────────────────────
 
 class MentalTab extends Component {
-  state = { attitude: 5, effort: 5, nerves: 5 };
+  constructor(props) {
+    super(props);
+    const p = props.prevValues || {};
+    this.state = {
+      attitude: p.attitude || 5,
+      effort:   p.effort   || 5,
+      nerves:   p.nerves   || 5,
+    };
+  }
 
   render() {
     const { attitude, effort, nerves } = this.state;
     const metrics = [
-      { label: `Attitude: ${attitude}/10`, key: 'attitude', val: attitude },
-      { label: `Effort: ${effort}/10`, key: 'effort', val: effort },
-      { label: `Nerves: ${nerves}/10`, key: 'nerves', val: nerves },
+      { label: `Attitude: ${attitude}/10`, key: 'attitude', val: attitude, colour: '#9C27B0' },
+      { label: `Effort: ${effort}/10`,     key: 'effort',   val: effort,   colour: '#E91E63' },
+      { label: `Nerves: ${nerves}/10`,     key: 'nerves',   val: nerves,   colour: '#FF5722' },
     ];
     return (
       <ScrollView contentContainerStyle={styles.tabContent}>
-        <Text style={styles.sectionLabel}>Mental Performance (slide to rate)</Text>
+        <Text style={styles.sectionLabel}>Mental Performance — LOW ← slide → HIGH</Text>
         {metrics.map((item) => (
-          <View key={item.key} style={styles.sliderRow}>
-            <Text style={styles.sliderLabel}>{item.label}</Text>
-            <Slider
-              value={item.val}
-              onValueChange={(v) => this.setState({ [item.key]: Math.round(v) })}
-              minimumValue={1} maximumValue={10} step={1}
-              thumbTintColor="#9C27B0" minimumTrackTintColor="#9C27B0"
-              style={{ flex: 1 }}
-            />
+          <View key={item.key} style={styles.ratingBlock}>
+            <View style={styles.ratingLabelRow}>
+              <Text style={styles.sliderLabel}>{item.label}</Text>
+              <View style={styles.scaleBadge}>
+                <Text style={[styles.scaleBadgeText, { color: item.colour }]}>{item.val}/10</Text>
+              </View>
+            </View>
+            <View style={styles.scaleLabelRow}>
+              <Text style={styles.scaleEnd}>LOW</Text>
+              <Slider
+                value={item.val}
+                onValueChange={(v) => this.setState({ [item.key]: Math.round(v) })}
+                minimumValue={1} maximumValue={10} step={1}
+                thumbTintColor={item.colour} minimumTrackTintColor={item.colour}
+                style={{ flex: 1, marginHorizontal: 8 }}
+              />
+              <Text style={styles.scaleEnd}>HIGH</Text>
+            </View>
           </View>
         ))}
+
         <View style={styles.coachHint}>
           <Text style={styles.coachHintTitle}> Virtual Coach Tip</Text>
           <Text style={styles.coachHintText}>
             Rate your nerves honestly — managing nerves is the #1 factor in match performance!
           </Text>
         </View>
+
         <Button
           title="Save Mental Evaluation"
           buttonStyle={[styles.saveBtn, { backgroundColor: '#9C27B0' }]}
@@ -204,7 +309,38 @@ class MentalTab extends Component {
 const TABS = ['Physical', 'Tactical', 'Mental'];
 
 export class EvaluationScreen extends Component {
-  state = { activeTab: 0, saved: { physical: false, tactical: false, mental: false } };
+  state = {
+    activeTab: 0,
+    saved: { physical: false, tactical: false, mental: false },
+    prevPhysical: null,
+    prevTactical: null,
+    prevMental: null,
+    loadingPrev: true,
+  };
+
+  componentDidMount() {
+    this.loadPrevEvaluations();
+  }
+
+  loadPrevEvaluations = async () => {
+    const user = auth.currentUser;
+    if (!user) { this.setState({ loadingPrev: false }); return; }
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'evaluations', user.uid, 'sessions'), orderBy('timestamp', 'desc'), limit(20))
+      );
+      let prevPhysical = null, prevTactical = null, prevMental = null;
+      snap.forEach((doc) => {
+        const d = doc.data();
+        if (d.section === 'physical' && !prevPhysical) prevPhysical = d.data;
+        if (d.section === 'tactical' && !prevTactical) prevTactical = d.data;
+        if (d.section === 'mental'   && !prevMental)   prevMental   = d.data;
+      });
+      this.setState({ prevPhysical, prevTactical, prevMental, loadingPrev: false });
+    } catch (e) {
+      this.setState({ loadingPrev: false });
+    }
+  };
 
   saveSection = (section, data) => {
     const user = auth.currentUser;
@@ -218,7 +354,8 @@ export class EvaluationScreen extends Component {
   };
 
   render() {
-    const { activeTab } = this.state;
+    const { activeTab, loadingPrev, prevPhysical, prevTactical, prevMental } = this.state;
+
     return (
       <SafeAreaView style={styles.safeArea}>
         <AppHeader navigation={this.props.navigation} title="Evaluation" homeScreen="HomeScreen" />
@@ -236,9 +373,13 @@ export class EvaluationScreen extends Component {
           ))}
         </View>
 
-        {activeTab === 0 && <PhysicalTab onSave={(d) => this.saveSection('physical', d)} />}
-        {activeTab === 1 && <TacticalTab onSave={(d) => this.saveSection('tactical', d)} />}
-        {activeTab === 2 && <MentalTab onSave={(d) => this.saveSection('mental', d)} />}
+        {loadingPrev ? null : (
+          <>
+            {activeTab === 0 && <PhysicalTab prevValues={prevPhysical} onSave={(d) => this.saveSection('physical', d)} />}
+            {activeTab === 1 && <TacticalTab prevValues={prevTactical} onSave={(d) => this.saveSection('tactical', d)} />}
+            {activeTab === 2 && <MentalTab   prevValues={prevMental}   onSave={(d) => this.saveSection('mental', d)} />}
+          </>
+        )}
       </SafeAreaView>
     );
   }
@@ -246,8 +387,6 @@ export class EvaluationScreen extends Component {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F4F6FA' },
-  headerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'white', elevation: 2 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#222' },
   tabBar: { flexDirection: 'row', backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#eee' },
   tab: { flex: 1, paddingVertical: 14, alignItems: 'center' },
   tabActive: { borderBottomWidth: 3, borderBottomColor: '#008000' },
@@ -255,13 +394,48 @@ const styles = StyleSheet.create({
   tabLabelActive: { color: '#008000', fontWeight: 'bold' },
   tabContent: { padding: 20, paddingBottom: 40 },
   sectionLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginBottom: 12, marginTop: 8 },
+
+  // Colour selector
   colourRow: { flexDirection: 'row', marginBottom: 16 },
-  colourChip: { alignItems: 'center', backgroundColor: 'white', borderRadius: 10, padding: 10, marginRight: 12, borderWidth: 1, borderColor: '#ddd', minWidth: 70 },
-  muscleGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 20 },
-  muscleChip: { backgroundColor: '#eee', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, margin: 4, borderWidth: 1, borderColor: '#ddd' },
+  colourChip: {
+    alignItems: 'center', backgroundColor: 'white', borderRadius: 10,
+    padding: 10, marginRight: 12, borderWidth: 1, borderColor: '#ddd', minWidth: 70,
+  },
+
+  // Body diagram
+  bodyDiagram: { marginBottom: 20 },
+  bodyRegion: { marginBottom: 10 },
+  bodyRegionLabel: { fontSize: 11, fontWeight: '700', color: '#888', textTransform: 'uppercase', marginBottom: 6 },
+  bodyRegionMuscles: { flexDirection: 'row', flexWrap: 'wrap' },
+  muscleChip: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#eee', borderRadius: 8, paddingVertical: 6,
+    paddingHorizontal: 10, margin: 4, borderWidth: 1, borderColor: '#ddd',
+  },
   muscleText: { fontSize: 12, color: '#333' },
+
+  // Rating blocks
+  ratingBlock: { marginBottom: 18, backgroundColor: 'white', borderRadius: 12, padding: 14, elevation: 1 },
+  ratingLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  sliderLabel: { fontSize: 14, color: '#333', fontWeight: '500' },
+  ratingValue: { fontSize: 14, fontWeight: 'bold' },
   sliderRow: { marginBottom: 18 },
-  sliderLabel: { fontSize: 14, color: '#333', marginBottom: 6, fontWeight: '500' },
+
+  // Mental scale labels
+  scaleLabelRow: { flexDirection: 'row', alignItems: 'center' },
+  scaleEnd: { fontSize: 11, color: '#aaa', fontWeight: '600' },
+  scaleBadge: { backgroundColor: '#f0f0f0', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  scaleBadgeText: { fontSize: 12, fontWeight: 'bold' },
+
+  // Tactical
+  checkRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, paddingVertical: 8 },
+  checkLabel: { fontSize: 14, color: '#555', marginLeft: 8, flex: 1 },
+  gamePlanInput: {
+    backgroundColor: 'white', borderRadius: 12, padding: 14, fontSize: 14,
+    color: '#222', minHeight: 110, textAlignVertical: 'top',
+    borderWidth: 1, borderColor: '#eee', elevation: 1, marginBottom: 8,
+  },
+
   saveBtn: { backgroundColor: '#008000', borderRadius: 12 },
   coachHint: { backgroundColor: '#fff3e0', borderRadius: 12, padding: 14, marginTop: 16, borderLeftWidth: 4, borderLeftColor: '#FF9800' },
   coachHintTitle: { fontWeight: 'bold', color: '#E65100', marginBottom: 4 },

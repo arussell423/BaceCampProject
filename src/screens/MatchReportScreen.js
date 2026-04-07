@@ -76,6 +76,22 @@ export class MatchReportScreen extends Component {
       <SafeAreaView style={styles.safeArea}>
         <AppHeader navigation={this.props.navigation} title="Match Report" homeScreen="HomeScreen" />
 
+        {/* Toggle between new report and past reports */}
+        <View style={styles.toggleRow}>
+          <TouchableOpacity
+            style={[styles.toggleBtn, !showPast && styles.toggleBtnActive]}
+            onPress={() => this.setState({ showPast: false })}
+          >
+            <Text style={[styles.toggleText, !showPast && styles.toggleTextActive]}>New Report</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleBtn, showPast && styles.toggleBtnActive]}
+            onPress={() => this.setState({ showPast: true })}
+          >
+            <Text style={[styles.toggleText, showPast && styles.toggleTextActive]}>Past Reports</Text>
+          </TouchableOpacity>
+        </View>
+
         <ScrollView contentContainerStyle={styles.container}>
           {!showPast ? (
             <>
@@ -177,9 +193,22 @@ export class MatchReportScreen extends Component {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F4F6FA' },
-  headerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'white', elevation: 2 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#222' },
+  toggleRow: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  toggleBtnActive: { borderBottomColor: '#008000' },
+  toggleText: { fontSize: 14, fontWeight: '600', color: '#888' },
+  toggleTextActive: { color: '#008000' },
   container: { padding: 20, paddingBottom: 40 },
   sectionLabel: { fontSize: 14, fontWeight: '600', color: '#444', marginBottom: 8, marginTop: 16 },
   inputLabel: { fontSize: 12, color: '#666', marginBottom: 4 },
