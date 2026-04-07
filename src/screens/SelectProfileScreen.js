@@ -7,13 +7,19 @@ import { doc, setDoc } from 'firebase/firestore';
 export class SelectProfileScreen extends Component {
   state = { saving: false };
 
-  selectRole = async (role) => {
+  componentWillUnmount() {
+    if (this._saveTimeout) clearTimeout(this._saveTimeout);
+  }
+
+  selectRole= async (role) => {
     const user = auth.currentUser;
     if (!user) return;
     this.setState({ saving: true });
     try {
       await setDoc(doc(db, 'users', user.uid), { role, email: user.email }, { merge: true });
-      // App.js Firestore listener will detect role change and render correct navigator
+      // App.js Firestore listener will detect role change and render correct navigator.
+      // Safety fallback: reset spinner after 5s in case the snapshot doesn't fire.
+      this._saveTimeout = setTimeout(() => this.setState({ saving: false }), 5000);
     } catch (e) {
       Alert.alert('Error', 'Could not save profile. Please try again.');
       this.setState({ saving: false });

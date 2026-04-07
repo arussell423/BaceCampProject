@@ -80,7 +80,7 @@ export class PasswordInputScreen extends Component {
                 size={25}
               />
             }
-            placeholder="Email"
+            placeholder="Enter your Password"
             inputContainerStyle={{
               borderWidth: 1,
               borderColor: 'white',
@@ -90,7 +90,6 @@ export class PasswordInputScreen extends Component {
               marginBottom: 20,
             }}
             autoCapitalize="none"
-            placeholder="Enter your Password"
             secureTextEntry={true}
             autoCorrect={false}
             returnKeyType="next"

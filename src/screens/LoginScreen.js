@@ -69,7 +69,7 @@ export class LoginScreen extends Component {
                  inputContainerStyle={styles.input}
                  placeholderTextColor="grey"
                 autoCapitalize="none"
-                secureTextEntry={true}
+                secureTextEntry={false}
                  autoCorrect={false}
                  keyboardType="email-address"
                  returnKeyType="next"
@@ -106,9 +106,9 @@ export class LoginScreen extends Component {
              <View style={styles.socialWrapper}>
                <Text style={styles.signinwith}>Sign in with</Text>
                <View style={styles.socialLogin}>
-                 <SocialIcon type="facebook" light />
-                 <SocialIcon type="google" light />
-                 <SocialIcon type="twitter" light />
+                 <SocialIcon type="facebook" light onPress={() => Alert.alert('Coming Soon', 'Facebook sign-in is not yet available.')} />
+                 <SocialIcon type="google" light onPress={() => Alert.alert('Coming Soon', 'Google sign-in is not yet available.')} />
+                 <SocialIcon type="twitter" light onPress={() => Alert.alert('Coming Soon', 'Twitter sign-in is not yet available.')} />
                </View>
                <Button
                  title="Login"

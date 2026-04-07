@@ -1,15 +1,17 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import Constants from 'expo-constants';
+
+const extra = Constants.expoConfig?.extra || {};
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCoiO6loHTb747_Uxmv_-8ofeV3uMOLNgA",
-  authDomain: "bace-camp-project.firebaseapp.com",
-  projectId: "bace-camp-project",
-  storageBucket: "bace-camp-project.appspot.com",
-  messagingSenderId: "425785697698",
-  appId: "1:425785697698:web:e0ef45e7120d61a2a5fefb",
-  measurementId: "G-VX7CGLB4TJ"
+  apiKey:            extra.firebaseApiKey,
+  authDomain:        extra.firebaseAuthDomain,
+  projectId:         extra.firebaseProjectId,
+  storageBucket:     extra.firebaseStorageBucket,
+  messagingSenderId: extra.firebaseMessagingSenderId,
+  appId:             extra.firebaseAppId,
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];

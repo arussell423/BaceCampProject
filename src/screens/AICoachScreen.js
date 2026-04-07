@@ -8,8 +8,9 @@ import {
 import { Text, Icon } from 'react-native-elements';
 import { auth, db } from '../components/Firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import Constants from 'expo-constants';
 
-const OPENAI_API_KEY = 'YOUR_OPENAI_KEY_HERE'; // Replace with your OpenAI API key
+const OPENAI_API_KEY = Constants.expoConfig?.extra?.openaiApiKey || '';
 
 const QUICK_SUGGESTIONS = [
   'Improve my serve',
@@ -18,8 +19,8 @@ const QUICK_SUGGESTIONS = [
   'Speed training',
 ];
 
-// In-memory cache since AsyncStorage is not available
-let cachedMessages = null;
+// In-memory cache keyed by user UID to prevent cross-user leaks
+const messageCache = {};
 
 export class AICoachScreen extends Component {
   state = {
@@ -31,6 +32,7 @@ export class AICoachScreen extends Component {
 
   componentDidMount() {
     const user = auth.currentUser;
+    const uid = user?.uid || 'guest';
     const playerName = (user && (user.displayName || user.email)) || 'Player';
     this.setState({ playerName });
 
@@ -39,12 +41,13 @@ export class AICoachScreen extends Component {
       content: `Hi ${playerName}! I'm your bACE CAMP AI Coach. Ask me anything about tennis training, technique, strategy, or recovery!`,
     };
 
-    if (cachedMessages && cachedMessages.length > 0) {
-      this.setState({ messages: cachedMessages });
+    if (messageCache[uid] && messageCache[uid].length > 0) {
+      this.setState({ messages: messageCache[uid] });
     } else {
       this.setState({ messages: [welcome] });
     }
 
+    this._uid = uid;
     this.loadLastEval();
   }
 
@@ -61,7 +64,7 @@ export class AICoachScreen extends Component {
         };
         this.setState((prev) => {
           const msgs = [...prev.messages, hint];
-          cachedMessages = msgs;
+          messageCache[this._uid] = msgs;
           return { messages: msgs };
         });
       }
@@ -112,14 +115,14 @@ export class AICoachScreen extends Component {
       this.setState((prev) => {
         const msgs = prev.messages.filter((m) => !m.thinking);
         const updated = [...msgs, { role: 'assistant', content: reply }];
-        cachedMessages = updated;
+        messageCache[this._uid] = updated;
         return { messages: updated, loading: false };
       });
     } catch (e) {
       this.setState((prev) => {
         const msgs = prev.messages.filter((m) => !m.thinking);
         const updated = [...msgs, { role: 'assistant', content: 'Sorry, I could not connect to the AI service. Please check your connection.' }];
-        cachedMessages = updated;
+        messageCache[this._uid] = updated;
         return { messages: updated, loading: false };
       });
     }

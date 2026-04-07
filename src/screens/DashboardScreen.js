@@ -120,7 +120,7 @@ export class DashboardScreen extends Component {
 
               {/* Wellness breakdown */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Mental & Wellness & Wellness Breakdown</Text>
+                <Text style={styles.sectionTitle}>Mental & Wellness Breakdown</Text>
                 {WELLNESS_CATEGORIES.map((cat) => (
                   <MetricBar key={cat} label={cat} score={wellness[cat]} colour="#2196F3" />
                 ))}
