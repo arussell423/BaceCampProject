@@ -125,7 +125,7 @@ export class CoachRosterScreen extends Component {
                 key={player.id}
                 style={styles.playerCard}
                 onPress={() => this.props.navigation.navigate('CoachPlayerDetailScreen', {
-                  playerUid: player.id,
+                  playerUid: player.uid || player.id,
                   playerEmail: player.email,
                 })}
               >

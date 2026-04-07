@@ -2,14 +2,14 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, ActivityIndicator, TextInput, Dimensions,
+  ScrollView, ActivityIndicator, TextInput, Dimensions, Alert,
 } from 'react-native';
 import { Text, Icon } from 'react-native-elements';
 import { LineChart } from 'react-native-chart-kit';
 import { auth, db } from '../../components/Firebase';
 import {
   collection, query, orderBy, limit, getDocs,
-  addDoc, serverTimestamp, onSnapshot,
+  addDoc, serverTimestamp, onSnapshot, where, getDoc, doc,
 } from 'firebase/firestore';
 import { getPlayerPushToken, sendPushNotification } from '../../services/notificationService';
 
@@ -93,7 +93,27 @@ export class CoachPlayerDetailScreen extends Component {
   loadData = async () => {
     const { playerUid } = this;
     if (!playerUid) return;
+    const coachUser = auth.currentUser;
+    if (!coachUser) return;
+
     try {
+      // ── Roster membership guard ──────────────────────────────────────────
+      // First try: player linked via Firebase UID (uid field on roster doc)
+      const byUidSnap = await getDocs(query(
+        collection(db, 'playerRosters', coachUser.uid, 'players'),
+        where('uid', '==', playerUid),
+      ));
+      // Fallback: playerUid might still be a sanitizedEmail (pending invite)
+      const byEmailDoc = byUidSnap.empty
+        ? await getDoc(doc(db, 'playerRosters', coachUser.uid, 'players', playerUid))
+        : null;
+
+      if (byUidSnap.empty && (!byEmailDoc || !byEmailDoc.exists())) {
+        Alert.alert('Access Denied', 'This player is not on your roster.');
+        this.props.navigation.goBack();
+        return;
+      }
+      // ── End guard ────────────────────────────────────────────────────────
       const [evalSnap, trainingSnap] = await Promise.all([
         getDocs(query(collection(db, 'evaluations', playerUid, 'sessions'), orderBy('timestamp', 'desc'), limit(24))),
         getDocs(query(collection(db, 'coachTraining', playerUid, 'sessions'), orderBy('timestamp', 'desc'), limit(10))),

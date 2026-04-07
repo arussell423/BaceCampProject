@@ -8,6 +8,7 @@ import { auth, db } from './src/components/Firebase';
 import { RootNavigator } from './src/components/Navigator';
 import { registerRoleChangeCallback } from './src/components/roleManager';
 import { registerForPushNotifications, saveTokenToFirestore } from './src/services/notificationService';
+import { linkPlayerToCoach } from './src/services/linkingService';
 
 export class App extends Component {
   state = { loading: true, user: null, role: null };
@@ -25,6 +26,8 @@ export class App extends Component {
         registerForPushNotifications()
           .then((token) => { if (token) saveTokenToFirestore(user.uid, token); })
           .catch(() => {});
+        // Link player to coach if pending invite exists (fixes roster UID gap)
+        linkPlayerToCoach(user).catch(() => {});
         this.roleUnsub = onSnapshot(
           doc(db, 'users', user.uid),
           (snap) => {

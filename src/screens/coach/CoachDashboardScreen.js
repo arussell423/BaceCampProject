@@ -40,8 +40,10 @@ export class CoachDashboardScreen extends Component {
 
       const players = await Promise.all(snap.docs.map(async (playerDoc) => {
         const p = { id: playerDoc.id, ...playerDoc.data() };
+        // Use Firebase UID if the player has linked; fall back to doc ID (sanitized email)
+        const lookupId = p.uid || playerDoc.id;
         try {
-          const evalSnap = await getDocs(query(collection(db, 'evaluations', playerDoc.id, 'sessions'), orderBy('timestamp', 'desc'), limit(5)));
+          const evalSnap = await getDocs(query(collection(db, 'evaluations', lookupId, 'sessions'), orderBy('timestamp', 'desc'), limit(5)));
 
           const evals = evalSnap.docs.map((d) => d.data());
           const physEval = evals.find((e) => e.section === 'physical');
@@ -131,7 +133,7 @@ export class CoachDashboardScreen extends Component {
                   key={player.id}
                   style={dbStyles.playerCard}
                   onPress={() => this.props.navigation.navigate('CoachPlayerDetailScreen', {
-                    playerUid: player.id,
+                    playerUid: player.uid || player.id,
                     playerEmail: player.email,
                   })}
                 >

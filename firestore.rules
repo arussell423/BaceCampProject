@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+
+    function isAuth()        { return request.auth != null; }
+    function isOwner(uid)    { return isAuth() && request.auth.uid == uid; }
+
+    // Is the current user a registered coach?
+    function isCoach() {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'coach';
+    }
+
+    // Is the current user the linked coach for a given player UID?
+    // Relies on users/{playerUid}.coachUid written by linkingService.js on login.
+    function isLinkedCoach(playerUid) {
+      return isCoach() &&
+        get(/databases/$(database)/documents/users/$(playerUid)).data.get('coachUid', '') == request.auth.uid;
+    }
+
+    // ── User profiles ──────────────────────────────────────────────────────────
+    match /users/{uid} {
+      // Owner can always read/write their own profile
+      allow read, write: if isOwner(uid);
+      // Linked coach can read (not write) a player's profile
+      allow read: if isLinkedCoach(uid);
+    }
+
+    // ── Player evaluations ─────────────────────────────────────────────────────
+    match /evaluations/{playerUid}/sessions/{sessionId} {
+      // Only the player writes their own evaluations
+      allow write: if isOwner(playerUid);
+      // Player OR linked coach can read
+      allow read: if isOwner(playerUid) || isLinkedCoach(playerUid);
+    }
+
+    // ── Coach-assigned training ────────────────────────────────────────────────
+    match /coachTraining/{playerUid}/sessions/{sessionId} {
+      // Only the linked coach writes training for a player
+      allow write: if isLinkedCoach(playerUid);
+      // Player OR linked coach can read
+      allow read: if isOwner(playerUid) || isLinkedCoach(playerUid);
+    }
+
+    // ── Coach feedback ─────────────────────────────────────────────────────────
+    match /coachFeedback/{playerUid}/messages/{msgId} {
+      allow write: if isLinkedCoach(playerUid);
+      allow read: if isOwner(playerUid) || isLinkedCoach(playerUid);
+    }
+
+    // ── Player ↔ Coach chat ────────────────────────────────────────────────────
+    match /chats/{playerUid}/messages/{msgId} {
+      // Both the player and their linked coach can read and write
+      allow read, write: if isOwner(playerUid) || isLinkedCoach(playerUid);
+    }
+
+    // ── Coach rosters ──────────────────────────────────────────────────────────
+    match /playerRosters/{coachUid}/players/{playerId} {
+      // Only the owning coach manages their roster
+      allow read, write: if isOwner(coachUid);
+    }
+
+    // ── Player→Coach lookup (for push notifications) ───────────────────────────
+    match /playerCoach/{sanitizedEmail} {
+      // Any authenticated user can read (push token lookup)
+      allow read: if isAuth();
+      // Only a registered coach can write this mapping
+      allow write: if isCoach();
+    }
+
+    // ── Coach invite requests ──────────────────────────────────────────────────
+    match /linkRequests/{requestId} {
+      // Only coaches can create invites
+      allow create: if isCoach();
+      // Only the inviting coach can read their own invites
+      allow read: if isAuth() && resource.data.coachUid == request.auth.uid;
+      // The invited player can update status (accept/decline)
+      allow update: if isAuth() && resource.data.playerEmail == request.auth.token.email;
+      // Coach can delete their own invites
+      allow delete: if isAuth() && resource.data.coachUid == request.auth.uid;
+    }
+
+    // ── Player personal data ───────────────────────────────────────────────────
+    match /schedules/{uid}/events/{eventId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /matchReports/{uid}/reports/{reportId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /speedDrills/{uid}/results/{resultId} {
+      allow read, write: if isOwner(uid);
+    }
+  }
+}
