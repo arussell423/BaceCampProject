@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import 'react-native-gesture-handler';
-import { Icon } from 'react-native-elements';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Auth screens
 import onBoardScreen      from '../screens/onBoardScreen';
@@ -45,14 +45,12 @@ const stackOptions = { headerShown: false };
 // ── Tab icon helper ──────────────────────────────────────────────────────────
 
 function TabIcon({ name, type, focused }) {
+  const color = focused ? '#006400' : '#9E9E9E';
+  const size  = focused ? 24 : 22;
+  const IconComponent = type === 'material-community' ? MaterialCommunityIcons : MaterialIcons;
   return (
     <View style={focused ? tabStyles.iconWrapActive : tabStyles.iconWrap}>
-      <Icon
-        name={name}
-        type={type || 'material'}
-        size={focused ? 24 : 22}
-        color={focused ? '#006400' : '#9E9E9E'}
-      />
+      <IconComponent name={name} size={size} color={color} />
     </View>
   );
 }

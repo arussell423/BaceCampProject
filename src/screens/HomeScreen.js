@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#006400', paddingTop: 24, paddingHorizontal: 20,
     paddingBottom: 28, borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
   },
-  logo: { width: 160, height: 52, marginBottom: 20 },
+  logo: { width: 220, height: 72, marginBottom: 20 },
   heroTextRow: { flexDirection: 'row', alignItems: 'center' },
   heroGreeting: { color: '#A5D6A7', fontSize: 13, fontWeight: '500' },
   heroName: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 },

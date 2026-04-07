@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     paddingTop: 20, paddingHorizontal: 20, paddingBottom: 28,
     borderBottomLeftRadius: 28, borderBottomRightRadius: 28,
   },
-  heroLogo: { width: 160, height: 52, marginBottom: 18 },
+  heroLogo: { width: 220, height: 72, marginBottom: 18 },
   heroRow: { flexDirection: 'row', alignItems: 'center' },
   heroGreeting: { color: '#A5D6A7', fontSize: 13, fontWeight: '500' },
   heroName: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 },

@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
   },
-  logo: { width: 180, height: 64, marginBottom: 10 },
+  logo: { width: 220, height: 78, marginBottom: 10 },
   tagline: { color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '500', letterSpacing: 0.5 },
 
   // Card
