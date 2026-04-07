@@ -16,7 +16,12 @@ export class SelectProfileScreen extends Component {
     if (!user) return;
     this.setState({ saving: true });
     try {
-      await setDoc(doc(db, 'users', user.uid), { role, email: user.email }, { merge: true });
+      await setDoc(doc(db, 'users', user.uid), {
+        role,
+        email: user.email,
+        // Preserve displayName already written by PasswordInputScreen if present
+        ...(user.displayName ? { displayName: user.displayName } : {}),
+      }, { merge: true });
       // App.js Firestore listener will detect role change and render correct navigator.
       // Safety fallback: reset spinner after 5s in case the snapshot doesn't fire.
       this._saveTimeout = setTimeout(() => this.setState({ saving: false }), 5000);

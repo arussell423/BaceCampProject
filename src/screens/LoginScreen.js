@@ -123,7 +123,7 @@ export class LoginScreen extends Component {
                       </View>
 
                       <TouchableOpacity
-                        onPress={() => this.props.navigation.navigate('PasswordInputScreen')}
+                        onPress={() => this.props.navigation.navigate('EmailInputScreen')}
                         style={styles.registerWrap}
                       >
                         <Text style={styles.registerText}>

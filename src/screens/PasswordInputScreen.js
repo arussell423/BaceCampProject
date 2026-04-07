@@ -1,221 +1,165 @@
-import React, {Component} from 'react';
+import React, { Component } from "react";
 import {
-  View,
-  StyleSheet,
-  Platform,
-  ActivityIndicator,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  ScrollView,
-} from 'react-native';
+  View, StyleSheet, Platform, KeyboardAvoidingView,
+  ScrollView, StatusBar, Image, Dimensions, TouchableOpacity,
+} from "react-native";
+import { Text, Icon, Input, Button } from "react-native-elements";
+import { auth, db } from "../components/Firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { Formik } from "formik";
+import * as Yup from "yup";
 
-import { Text, Icon, Input, Button, SocialIcon, Image } from 'react-native-elements';
-import { auth } from '../components/Firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import {Formik} from 'formik';
-import * as Yup from 'yup';
-
- 
+const SCREEN_H = Dimensions.get("window").height;
 
 export class PasswordInputScreen extends Component {
-  state = {
-    password: '',
+  signUp = async (values) => {
+    const email = this.props.route?.params?.email || "";
+    const displayName = this.props.route?.params?.displayName || "";
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, values.password);
+      // Save display name to Firebase Auth profile
+      await updateProfile(cred.user, { displayName });
+      // Save to Firestore so the app can read it immediately
+      await setDoc(doc(db, "users", cred.user.uid), {
+        email,
+        displayName,
+      }, { merge: true });
+      // onAuthStateChanged in App.js will pick up the new user and route to SelectProfileScreen
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
-    onChange = password => this.setState({ password });
-    
-    signUp = (values) => {
-        this.setState({loading: true});
-        let email = this.props.route?.params?.email;
-        createUserWithEmailAndPassword(auth, email, values.password)
-          .then(user => {
-            this.setState({ user, loading: false });
-            this.props.navigation.navigate('TouchAuthentication');
-          })
-          .catch(err => {
-            this.setState({ loading: false });
-            alert(err.message);
-          });
-      };
-    
-
   render() {
+    const email = this.props.route?.params?.email || "";
+
     return (
-      <KeyboardAvoidingView
-        style={styles.keyboardAvoidingView}
-        behavior={'padding'}
-        enabled
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 84}>
-        <ScrollView
-          style={styles.container}
-                keyboardShouldPersistTaps="handled">
-                
-                <Formik
-  initialValues={{password: '', passwordConfirm: ''}}
-  onSubmit={(values, {setSubmitting}) => {
-    this.signUp(values, this.props.navigation);
-    setSubmitting(false);
-  }}
-                    validationSchema={SignupSchema}>
-                
-                {formikProps => (
-                        
-                        <React.Fragment>
+      <View style={styles.root}>
+        <StatusBar barStyle="light-content" backgroundColor="#004d00" />
 
-          <View style={styles.headerContainer}>
+        {/* Hero */}
+        <View style={styles.hero}>
           <Image
+            source={require("../assets/image/bACE_CAMP-logo-light.png")}
             style={styles.logo}
-            source={require('../assets/image/bACE_CAMP-logo-transparent.png')}
+            resizeMode="contain"
           />
-            <Text h4 style={{textAlign: 'center'}}>
-                                Now let's setup your password
-            </Text>
-                    </View>
-                   
-          <Input
-            leftIcon={
-              <Icon
-                name="lock"
-                color="#87cefa"
-                size={25}
-              />
-            }
-            placeholder="Enter your Password"
-            inputContainerStyle={{
-              borderWidth: 1,
-              borderColor: 'white',
-              borderLeftWidth: 0,
-              height: 50,
-              backgroundColor: 'white',
-              marginBottom: 20,
-            }}
-            autoCapitalize="none"
-            secureTextEntry={true}
-            autoCorrect={false}
-            returnKeyType="next"
-            onChangeText={formikProps.handleChange('password')}
-                    />
-            <Input
-            leftIcon={
-              <Icon
-                name="lock"
-                color="#87cefa"
-                size={25}
-              />
-            }
-            placeholder="Confirm Password"
-            inputContainerStyle={{
-              borderWidth: 1,
-              borderColor: 'white',
-              borderLeftWidth: 0,
-              height: 50,
-              backgroundColor: 'white',
-              marginBottom: 20,
-            }}
-            autoCapitalize="none"
-            secureTextEntry={true}
-            autoCorrect={false}
-            returnKeyType="next"
-            onChangeText={formikProps.handleChange('passwordConfirm')}
-            />
-                           
-            {formikProps.errors.password ? (
-        <Text style={{color: 'red'}}>
-          {formikProps.errors.password}
-        </Text>
-      ) : null}
-      {formikProps.errors.passwordConfirm ? (
-        <Text style={{color: 'red'}}>
-          {formikProps.errors.passwordConfirm}
-        </Text>
-      ) : null}
-          <View style={styles.btnWrapper}>
-            <TouchableOpacity>
-                                <Button
-              title="Continue"
-              loading={false}
-              loadingProps={{size: 'small', color: 'white'}}
-              buttonStyle={{
-                backgroundColor: '#008000',
-                borderRadius: 15,
-              }}
-              titleStyle={{fontWeight: 'bold', fontSize: 23}}
-              containerStyle={{marginVertical: 10, height: 50, width: 300}}
-              onPress={formikProps.handleSubmit}
-              
-              underlayColor="transparent"
-            />
-                </TouchableOpacity>    
-                    </View>
-                    
-                    </React.Fragment>
-                    )}
+          <Text style={styles.heroTitle}>Set your password</Text>
+          <Text style={styles.heroSub}>Step 2 of 2 — for {email}</Text>
+        </View>
 
-                    </Formik>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
+        >
+          <ScrollView
+            contentContainerStyle={styles.card}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Formik
+              initialValues={{ password: "", passwordConfirm: "" }}
+              onSubmit={(values, { setSubmitting }) => {
+                this.signUp(values).finally(() => setSubmitting(false));
+              }}
+              validationSchema={SignupSchema}
+            >
+              {fp => (
+                <>
+                  <Input
+                    leftIcon={<Icon name="lock-outline" type="material-community" color="#008000" size={20} />}
+                    placeholder="Password"
+                    inputContainerStyle={styles.inputContainer}
+                    inputStyle={styles.inputText}
+                    placeholderTextColor="#aaa"
+                    autoCapitalize="none"
+                    secureTextEntry={true}
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    onChangeText={fp.handleChange("password")}
+                    errorMessage={fp.touched.password && fp.errors.password ? fp.errors.password : ""}
+                    errorStyle={styles.errorText}
+                  />
+
+                  <Input
+                    leftIcon={<Icon name="lock-check-outline" type="material-community" color="#008000" size={20} />}
+                    placeholder="Confirm password"
+                    inputContainerStyle={styles.inputContainer}
+                    inputStyle={styles.inputText}
+                    placeholderTextColor="#aaa"
+                    autoCapitalize="none"
+                    secureTextEntry={true}
+                    autoCorrect={false}
+                    returnKeyType="done"
+                    onSubmitEditing={fp.handleSubmit}
+                    onChangeText={fp.handleChange("passwordConfirm")}
+                    errorMessage={fp.touched.passwordConfirm && fp.errors.passwordConfirm ? fp.errors.passwordConfirm : ""}
+                    errorStyle={styles.errorText}
+                  />
+
+                  <Button
+                    title="Create Account"
+                    loading={fp.isSubmitting}
+                    loadingProps={{ size: "small", color: "white" }}
+                    buttonStyle={styles.btn}
+                    titleStyle={styles.btnTitle}
+                    containerStyle={styles.btnContainer}
+                    onPress={fp.handleSubmit}
+                    disabled={!(fp.isValid && fp.dirty)}
+                  />
+
+                  <TouchableOpacity
+                    style={styles.backWrap}
+                    onPress={() => this.props.navigation.goBack()}
+                  >
+                    <Text style={styles.backText}>← Back to details</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </Formik>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </View>
     );
   }
 }
 
-
-
 const SignupSchema = Yup.object({
-    password: Yup.string()
-      .required('Password is required')
-      .min(6, 'Password must be at least 6 characters'),
-    passwordConfirm: Yup.string()
-      .oneOf([Yup.ref('password'), null], 'Passwords must match')
-      .required('Password confirm is required'),
-  });
+  password: Yup.string()
+    .required("Password is required")
+    .min(6, "Password must be at least 6 characters"),
+  passwordConfirm: Yup.string()
+    .oneOf([Yup.ref("password"), null], "Passwords must match")
+    .required("Please confirm your password"),
+});
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#F4F6FA',
-    height: '100%',
+  root: { flex: 1, backgroundColor: "#fff" },
+  hero: {
+    height: SCREEN_H * 0.28,
+    backgroundColor: "#004d00",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingTop: 16,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
   },
-  headerContainer: {
-    top: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40,
-    },
-    logo: {
-        width: 100,
-        height: 200,
-        padding: 10,
-        marginBottom: 10,
-    },
-  heading: {
-    color: 'white',
-    marginTop: 10,
-    fontSize: 22,
-    fontWeight: 'bold',
+  logo: { width: 160, height: 52, marginBottom: 10 },
+  heroTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
+  heroSub: { color: "rgba(255,255,255,0.6)", fontSize: 12, marginTop: 4, paddingHorizontal: 20, textAlign: "center" },
+  card: { paddingHorizontal: 24, paddingTop: 28, paddingBottom: 40 },
+  inputContainer: {
+    borderWidth: 1, borderColor: "#ddd", borderRadius: 12,
+    paddingHorizontal: 10, backgroundColor: "#FAFAFA", marginBottom: 2,
   },
-  btnWrapper: {
-    marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  socialLogin: {
-    flexDirection: 'row',
-    marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  contentView: {
-    // marginTop: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  inputContainerStyle: {
-    marginTop: 16,
-    width: '90%',
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
-  },
+  inputText: { fontSize: 15, color: "#222" },
+  errorText: { color: "#E53935", fontSize: 12 },
+  btn: { backgroundColor: "#006400", borderRadius: 14, paddingVertical: 14 },
+  btnTitle: { fontSize: 16, fontWeight: "700" },
+  btnContainer: { marginTop: 8, marginBottom: 20 },
+  backWrap: { alignItems: "center" },
+  backText: { color: "#008000", fontSize: 13, fontWeight: "600" },
 });
+
 export default PasswordInputScreen;
