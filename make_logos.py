@@ -38,8 +38,8 @@ def make_light_version(src_path, dst_path, white_threshold=235):
 
         # Light blue court lines: blue dominant, not too dark, not white
         elif b > r + 25 and b > g and luma > 140 and luma < white_threshold:
-            # Render as very faint white lines so the court silhouette reads subtly
-            new_data.append((255, 255, 255, 30))
+            # Keep blue court colour — boost brightness so it pops on dark green
+            new_data.append((80, 180, 255, 220))
 
         # Green pixels (ACE text) -> keep green, slightly brighter for dark bg
         elif g > r + 40 and g > b + 40:
