@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import {
   View, StyleSheet, ScrollView, TouchableOpacity,
-  SafeAreaView, Image, StatusBar,
+  SafeAreaView, Image, StatusBar, Text,
 } from 'react-native';
-import { Text, Icon, Avatar } from 'react-native-elements';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../components/Firebase';
 import { signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -63,7 +63,9 @@ export class HomeScreen extends Component {
                 <Text style={styles.heroName}>{displayName}</Text>
               </View>
               <TouchableOpacity onPress={() => this.props.navigation.navigate('ProfileScreen')} style={styles.avatarWrap}>
-                <Avatar rounded title={initials} size={46} containerStyle={styles.avatar} />
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{initials}</Text>
+                </View>
               </TouchableOpacity>
             </View>
             <View style={styles.roleBadge}>
@@ -88,7 +90,7 @@ export class HomeScreen extends Component {
                 activeOpacity={0.75}
               >
                 <View style={[styles.iconCircle, { backgroundColor: item.color }]}>
-                  <Icon name={item.icon} type={item.type} size={24} color="#fff" />
+                  <MaterialCommunityIcons name={item.icon} size={24} color="#fff" />
                 </View>
                 <Text style={[styles.cardLabel, { color: item.color }]}>{item.label}</Text>
               </TouchableOpacity>
@@ -97,17 +99,17 @@ export class HomeScreen extends Component {
 
           <TouchableOpacity style={styles.coachBanner} onPress={() => this.props.navigation.navigate('AICoachScreen')} activeOpacity={0.85}>
             <View style={styles.coachIconWrap}>
-              <Icon name="robot" type="material-community" size={28} color="#fff" />
+              <MaterialCommunityIcons name="robot" size={28} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.coachTitle}>AI Virtual Coach</Text>
               <Text style={styles.coachMsg}>Get personalised training advice based on your evaluations</Text>
             </View>
-            <Icon name="chevron-right" type="material-community" size={22} color="#1B5E20" />
+            <MaterialCommunityIcons name="chevron-right" size={22} color="#1B5E20" />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.logoutBtn} onPress={this.logout}>
-            <Icon name="logout" type="material-community" size={15} color="#999" />
+            <MaterialCommunityIcons name="logout" size={15} color="#999" />
             <Text style={styles.logoutText}>  Sign Out</Text>
           </TouchableOpacity>
 
@@ -129,7 +131,12 @@ const styles = StyleSheet.create({
   heroGreeting: { color: '#A5D6A7', fontSize: 13, fontWeight: '500' },
   heroName: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 2 },
   avatarWrap: { marginLeft: 12 },
-  avatar: { backgroundColor: '#2E7D32', borderWidth: 2, borderColor: '#A5D6A7' },
+  avatar: {
+    width: 46, height: 46, borderRadius: 23,
+    backgroundColor: '#2E7D32', borderWidth: 2, borderColor: '#A5D6A7',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  avatarText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   roleBadge: {
     backgroundColor: 'rgba(255,255,255,0.2)', alignSelf: 'flex-start',
     borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4, marginTop: 14,
