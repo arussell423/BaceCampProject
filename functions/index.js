@@ -86,13 +86,32 @@ exports.onCoachInvite = functions.firestore
         `<span class="badge">New Invitation</span>
          <p>Hi there,</p>
          <p><strong>${coachName}</strong> has invited you to join their team on <strong>${APP_NAME}</strong> — a professional tennis coaching platform to track your performance, receive personalised training plans, and communicate directly with your coach.</p>
-         <p><strong>To accept your invitation:</strong></p>
+         <p><strong>To get started:</strong></p>
          <ol>
-           <li>Download the <strong>${APP_NAME}</strong> app</li>
-           <li>Create an account using this email address: <strong>${playerEmail}</strong></li>
+           <li>Download the <strong>Expo Go</strong> app to run ${APP_NAME} during testing</li>
+           <li>Create your account using this exact email address: <strong>${playerEmail}</strong></li>
            <li>Select <strong>Player</strong> as your role</li>
            <li>You'll automatically be connected to ${coachName}'s roster</li>
          </ol>
+         <table style="width:100%;margin:20px 0;">
+           <tr>
+             <td style="padding-right:8px;">
+               <a href="https://apps.apple.com/app/expo-go/id982107779"
+                  style="display:block;background:#000;color:#fff;text-align:center;padding:13px 10px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;">
+                 📱 Download on the<br/>App Store
+               </a>
+             </td>
+             <td style="padding-left:8px;">
+               <a href="https://play.google.com/store/apps/details?id=host.exp.exponent"
+                  style="display:block;background:#006400;color:#fff;text-align:center;padding:13px 10px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;">
+                 🤖 Get it on<br/>Google Play
+               </a>
+             </td>
+           </tr>
+         </table>
+         <p style="background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:12px 16px;font-size:13px;color:#7d6608;">
+           <strong>Note:</strong> Once ${APP_NAME} is live in the App Store and Google Play, you'll be able to download it directly. Your account and connection to ${coachName} will carry over automatically.
+         </p>
          <p style="color:#888;font-size:13px;">If you weren't expecting this invitation, you can safely ignore this email.</p>`
       );
 
