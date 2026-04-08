@@ -17,6 +17,7 @@
     "expo-device": "~8.0.10",
     "expo-notifications": "~0.32.16",
     "expo-status-bar": "3.0.9",
+    "expo-updates": "~29.0.16",
     "firebase": "10.14.1",
     "formik": "2.4.9",
     "react": "19.1.0",

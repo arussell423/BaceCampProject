@@ -109,6 +109,12 @@ exports.onCoachInvite = functions.firestore
              </td>
            </tr>
          </table>
+         <p style="text-align:center;margin:16px 0;">
+           <a href="https://expo.dev/accounts/alexis84/projects/bace-camp-project/updates/7a1155cd-8a65-4e68-b25b-6a6351b2d644"
+              style="display:inline-block;background:#1B5E20;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">
+             🎾 Open bACE CAMP in Expo Go
+           </a>
+         </p>
          <p style="background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:12px 16px;font-size:13px;color:#7d6608;">
            <strong>Note:</strong> Once ${APP_NAME} is live in the App Store and Google Play, you'll be able to download it directly. Your account and connection to ${coachName} will carry over automatically.
          </p>

@@ -4,7 +4,8 @@ import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, TextInput, Alert, Modal, ActivityIndicator,
 } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
+import { Text } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
 import { collection, getDocs, doc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 
@@ -92,7 +93,18 @@ export class CoachRosterScreen extends Component {
             const user = auth.currentUser;
             if (!user) return;
             try {
-              await deleteDoc(doc(db, 'playerRosters', user.uid, 'players', player.id));
+              const sanitizedEmail = (player.email || player.id).replace(/[.#$[\]]/g, '_');
+              const batch = writeBatch(db);
+              // Remove from roster
+              batch.delete(doc(db, 'playerRosters', user.uid, 'players', player.id));
+              // Remove playerCoach lookup
+              batch.delete(doc(db, 'playerCoach', sanitizedEmail));
+              await batch.commit();
+              // Clear coachUid from player's profile if they have a Firebase UID
+              if (player.uid) {
+                const { updateDoc } = await import('firebase/firestore');
+                await updateDoc(doc(db, 'users', player.uid), { coachUid: null }).catch(() => {});
+              }
               this.loadRoster();
             } catch (e) {
               Alert.alert('Error', 'Could not remove player.');
@@ -140,7 +152,7 @@ export class CoachRosterScreen extends Component {
                   )}
                 </View>
                 <TouchableOpacity onPress={() => this.removePlayer(player)} style={styles.removeBtn}>
-                  <Icon name="close" type="material" size={18} color="#aaa" />
+                  <MaterialIcons name="close" size={18} color="#aaa" />
                 </TouchableOpacity>
               </TouchableOpacity>
             ))}
@@ -165,7 +177,7 @@ export class CoachRosterScreen extends Component {
           style={styles.fab}
           onPress={() => this.setState({ showInviteModal: true })}
         >
-          <Icon name="person-add" type="material" color="white" size={26} />
+          <MaterialIcons name="person-add" size={26} color="white" />
         </TouchableOpacity>
 
         {/* Invite Modal */}
