@@ -14,7 +14,27 @@ module.exports = {
     },
     runtimeVersion: { policy: 'sdkVersion' },
     assetBundlePatterns: ['**/*'],
-    ios: { supportsTablet: true },
+    icon: './assets/icon.png',
+    ios: { supportsTablet: true, bundleIdentifier: 'com.bacecamp.app' },
+    android: {
+      package: 'com.bacecamp.app',
+      adaptiveIcon: {
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#006400',
+      },
+    },
+    web: {
+      favicon: './assets/favicon.png',
+      name: 'bACE CAMP',
+      shortName: 'bACE CAMP',
+      description: 'Tennis coaching platform — Train Smart. Play Hard. Win.',
+      backgroundColor: '#ffffff',
+      themeColor: '#006400',
+      display: 'standalone',
+      orientation: 'portrait',
+      startUrl: '/',
+      lang: 'en',
+    },
     extra: {
       eas: { projectId: 'd8d783ce-6cc0-4774-88db-00e82778910a' },
       firebaseApiKey:            process.env.FIREBASE_API_KEY,

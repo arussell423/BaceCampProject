@@ -1,12 +1,10 @@
 import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, getAuth, inMemoryPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import Constants from 'expo-constants';
 
 const extra = Constants.expoConfig?.extra || {};
 
-// Hardcoded fallback for environments where Constants.expoConfig.extra
-// is not populated (e.g. Expo Go + EAS Update context).
 const firebaseConfig = {
   apiKey:            extra.firebaseApiKey            || 'AIzaSyCoiO6loHTb747_Uxmv_-8ofeV3uMOLNgA',
   authDomain:        extra.firebaseAuthDomain        || 'bace-camp-project.firebaseapp.com',
@@ -17,10 +15,18 @@ const firebaseConfig = {
 };
 
 let app, auth, db;
+let firebaseInitOk = false;
 try {
-  app  = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  auth = getAuth(app);
-  db   = getFirestore(app);
+  if (getApps().length === 0) {
+    app  = initializeApp(firebaseConfig);
+    // Use inMemoryPersistence — pure JS, no native deps, works in all environments
+    auth = initializeAuth(app, { persistence: inMemoryPersistence });
+  } else {
+    app  = getApps()[0];
+    auth = getAuth(app);
+  }
+  db = getFirestore(app);
+  firebaseInitOk = true;
 } catch (e) {
   console.error('Firebase init failed:', e?.message);
   app  = null;
@@ -28,5 +34,5 @@ try {
   db   = {};
 }
 
-export { auth, db };
+export { auth, db, firebaseInitOk };
 export default app;

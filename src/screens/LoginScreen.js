@@ -5,7 +5,7 @@ import {
   StatusBar, Image, Dimensions, Text, TextInput,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { auth } from '../components/Firebase';
+import { auth, firebaseInitOk } from '../components/Firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
@@ -14,15 +14,25 @@ const SCREEN_H = Dimensions.get('window').height;
 
 export class LoginScreen extends Component {
 
-    Login = (values) => {
-        signInWithEmailAndPassword(auth, values.email, values.password)
-          .then(() => {
-            // onAuthStateChanged in App.js handles routing automatically
-          })
-          .catch(err => {
-            alert(err.message);
-          });
-      };
+    Login = async (values, setSubmitting, setLoginError) => {
+        if (!firebaseInitOk) {
+            setLoginError('Firebase failed to initialize. Check your internet connection and restart the app.');
+            setSubmitting(false);
+            return;
+        }
+        try {
+            // Race auth against a 15-second timeout
+            const authPromise = signInWithEmailAndPassword(auth, values.email, values.password);
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Login timed out. Check your internet connection.')), 15000)
+            );
+            await Promise.race([authPromise, timeoutPromise]);
+            // onAuthStateChanged in App.js handles routing — don't call setSubmitting(false) here
+        } catch (err) {
+            setLoginError(err.message);
+            setSubmitting(false);
+        }
+    };
     
     render() {
         return (
@@ -52,10 +62,10 @@ export class LoginScreen extends Component {
                 <Text style={styles.cardTitle}>Sign in to your account</Text>
 
                 <Formik
-                  initialValues={{email: '', password: ''}}
-                  onSubmit={(values, {setSubmitting}) => {
-                    this.Login(values);
-                    setSubmitting(false);
+                  initialValues={{email: '', password: '', loginError: ''}}
+                  onSubmit={async (values, {setSubmitting, setFieldValue}) => {
+                    setFieldValue('loginError', '');
+                    await this.Login(values, setSubmitting, (msg) => setFieldValue('loginError', msg));
                   }}
                   validationSchema={LoginSchema}>
                   {formikProps => (
@@ -93,6 +103,13 @@ export class LoginScreen extends Component {
                       </View>
                       {formikProps.errors.password ? <Text style={styles.errorText}>{formikProps.errors.password}</Text> : null}
 
+                      {/* Login error shown inline */}
+                      {formikProps.values.loginError ? (
+                        <View style={styles.loginErrorBox}>
+                          <Text style={styles.loginErrorText}>{formikProps.values.loginError}</Text>
+                        </View>
+                      ) : null}
+
                       <TouchableOpacity
                         onPress={() => Alert.alert('Forgot Password', 'Please contact your coach or re-register.')}
                         style={styles.forgotWrap}
@@ -103,9 +120,11 @@ export class LoginScreen extends Component {
                       <TouchableOpacity
                         style={[styles.loginBtn, styles.loginBtnContainer, !(formikProps.isValid && formikProps.dirty) && { opacity: 0.5 }]}
                         onPress={formikProps.handleSubmit}
-                        disabled={!(formikProps.isValid && formikProps.dirty)}
+                        disabled={!(formikProps.isValid && formikProps.dirty) || formikProps.isSubmitting}
                       >
-                        {formikProps.isSubmitting ? <ActivityIndicator size="small" color="white" /> : <Text style={styles.loginBtnTitle}>Sign In</Text>}
+                        {formikProps.isSubmitting
+                          ? <ActivityIndicator size="small" color="white" />
+                          : <Text style={styles.loginBtnTitle}>Sign In</Text>}
                       </TouchableOpacity>
 
                       <View style={styles.dividerRow}>
@@ -205,6 +224,10 @@ const styles = StyleSheet.create({
   registerWrap: { alignItems: 'center' },
   registerText: { color: '#888', fontSize: 13 },
   registerLink: { color: '#006400', fontWeight: '700' },
+
+  // Login error
+  loginErrorBox: { backgroundColor: '#FFEBEE', borderRadius: 8, padding: 10, marginBottom: 12 },
+  loginErrorText: { color: '#B71C1C', fontSize: 13 },
 });
 
 

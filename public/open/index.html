@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>bACE CAMP – Open in Expo Go</title>
+  <title>bACE CAMP – Get the App</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -45,57 +45,25 @@
       cursor: pointer;
       text-decoration: none;
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
-    .open-btn:active { background: #004d00; }
-    .divider {
-      text-align: center;
-      color: #bbb;
-      font-size: 13px;
-      margin: 16px 0;
-      position: relative;
-    }
-    .divider::before, .divider::after {
-      content: '';
-      display: inline-block;
-      width: 40%;
-      height: 1px;
-      background: #e0e0e0;
-      vertical-align: middle;
-      margin: 0 8px;
-    }
-    .manual {
-      background: #f4f6fa;
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 13px;
-      color: #555;
-    }
-    .manual strong { display: block; margin-bottom: 6px; color: #333; }
-    .manual code {
-      display: block;
-      word-break: break-all;
-      font-size: 12px;
+    .open-btn.secondary {
+      background: #fff;
       color: #006400;
-      background: #e8f5e9;
-      border-radius: 6px;
-      padding: 8px 10px;
-      margin-top: 6px;
+      border: 2px solid #006400;
+      font-size: 15px;
+      padding: 13px;
     }
-    .store-row { display: flex; gap: 10px; margin-top: 20px; }
-    .store-btn {
-      flex: 1;
-      display: block;
-      text-align: center;
-      padding: 11px 6px;
-      border-radius: 10px;
-      font-size: 12px;
-      font-weight: 700;
-      text-decoration: none;
-      color: #fff;
+    .open-btn:active { opacity: 0.85; }
+    .label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 10px;
+      margin-top: 20px;
     }
-    .ios-btn  { background: #000; }
-    .and-btn  { background: #006400; }
     .note { font-size: 12px; color: #aaa; text-align: center; margin-top: 16px; line-height: 1.5; }
   </style>
 </head>
@@ -106,31 +74,24 @@
       <p>Tennis Coaching Platform</p>
     </div>
     <div class="body">
-      <p>Your coach has invited you to train on <strong>bACE CAMP</strong>. Tap the button below to open the app in Expo Go.</p>
+      <p>Your coach has invited you to train on <strong>bACE CAMP</strong>. Open the app to accept your invite.</p>
 
-      <a class="open-btn" id="openBtn"
-         href="exp://u.expo.dev/d8d783ce-6cc0-4774-88db-00e82778910a?channel-name=preview">
-        🎾 Open bACE CAMP in Expo Go
+      <div class="label">Best option — works on any device</div>
+      <a class="open-btn" href="https://bace-camp-project.web.app">
+        🌐 Open Web App
       </a>
 
-      <p class="note">If the button opens a browser error, Expo Go is not installed yet. Download it first:</p>
-      <div class="store-row">
-        <a class="store-btn ios-btn"
-           href="https://apps.apple.com/app/expo-go/id982107779">
-          📱 App Store
-        </a>
-        <a class="store-btn and-btn"
-           href="https://play.google.com/store/apps/details?id=host.exp.exponent">
-          🤖 Google Play
-        </a>
-      </div>
+      <div class="label">Android — native app</div>
+      <a class="open-btn secondary" href="https://bace-camp-project.web.app">
+        🤖 Download Android APK (coming soon)
+      </a>
 
-      <div class="divider">or open manually</div>
+      <div class="label">iPhone — coming soon</div>
+      <a class="open-btn secondary" style="opacity:0.5;pointer-events:none;">
+        🍎 iOS App (TestFlight — coming soon)
+      </a>
 
-      <div class="manual">
-        <strong>Paste this URL into Expo Go → Enter URL:</strong>
-        <code>exp://u.expo.dev/d8d783ce-6cc0-4774-88db-00e82778910a?channel-name=preview</code>
-      </div>
+      <p class="note">On iPhone, tap <strong>Open Web App</strong> above, then tap the share icon → "Add to Home Screen" to install.</p>
     </div>
   </div>
 </body>
