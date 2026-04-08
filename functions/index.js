@@ -108,7 +108,7 @@ exports.onCoachInvite = functions.firestore
          <p style="font-weight:700;margin:16px 0 4px;">Step 2 — Open the app</p>
          <p style="margin:0 0 12px;font-size:14px;color:#555;">Tap the button below. It will open a page in your browser with a button that launches bACE CAMP inside Expo Go.</p>
          <p style="text-align:center;margin:12px 0 6px;">
-           <a href="https://bace-camp-project.web.app"
+           <a href="https://bace-camp-project.web.app/open"
               style="display:inline-block;background:#1B5E20;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">
              🎾 Open bACE CAMP
            </a>
