@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Text, ScrollView } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -9,6 +9,29 @@ import { RootNavigator } from './src/components/Navigator';
 import { registerRoleChangeCallback } from './src/components/roleManager';
 import { registerForPushNotifications, saveTokenToFirestore } from './src/services/notificationService';
 import { linkPlayerToCoach } from './src/services/linkingService';
+
+// ── Error boundary — shows the actual error instead of a blank screen ─────────
+class ErrorBoundary extends Component {
+  state = { error: null };
+  static getDerivedStateFromError(error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 60 }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: 'red', marginBottom: 12 }}>
+            App Error (copy this to your developer):
+          </Text>
+          <Text style={{ fontSize: 13, color: '#333', fontFamily: 'monospace' }}>
+            {this.state.error?.message || String(this.state.error)}
+            {'\n\n'}
+            {this.state.error?.stack || ''}
+          </Text>
+        </ScrollView>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export class App extends Component {
   state = { loading: true, user: null, role: null };
@@ -63,11 +86,13 @@ export class App extends Component {
     }
 
     return (
-      <GestureHandlerRootView style={styles.root}>
-        <SafeAreaProvider>
-          <RootNavigator user={user} role={role} />
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
+      <ErrorBoundary>
+        <GestureHandlerRootView style={styles.root}>
+          <SafeAreaProvider>
+            <RootNavigator user={user} role={role} />
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </ErrorBoundary>
     );
   }
 }
