@@ -4,6 +4,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
+import * as Font from 'expo-font';
+import { MaterialCommunityIcons, MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { auth, db } from './src/components/Firebase';
 import { RootNavigator } from './src/components/Navigator';
 import { registerRoleChangeCallback } from './src/components/roleManager';
@@ -34,9 +36,18 @@ class ErrorBoundary extends Component {
 }
 
 export class App extends Component {
-  state = { loading: true, user: null, role: null };
+  state = { loading: true, fontsLoaded: false, user: null, role: null };
 
   componentDidMount() {
+    // Preload all icon fonts so they render correctly on web
+    Font.loadAsync({
+      ...MaterialCommunityIcons.font,
+      ...MaterialIcons.font,
+      ...Ionicons.font,
+    })
+      .catch(() => {})
+      .finally(() => this.setState({ fontsLoaded: true }));
+
     // Allow any screen to directly update role state (bypasses onSnapshot delay)
     registerRoleChangeCallback((newRole) => {
       this.setState({ role: newRole });
@@ -71,9 +82,9 @@ export class App extends Component {
   }
 
   render() {
-    const { loading, user, role } = this.state;
+    const { loading, fontsLoaded, user, role } = this.state;
 
-    if (loading) {
+    if (loading || !fontsLoaded) {
       return (
         <ErrorBoundary>
           <GestureHandlerRootView style={styles.root}>

@@ -5,7 +5,7 @@ import {
   SafeAreaView, Alert, TextInput, Text,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import Slider from '@react-native-community/slider';
+import Slider from '../components/CrossPlatformSlider';
 import { auth, db } from '../components/Firebase';
 import { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from 'firebase/firestore';
 import { getCoachPushToken, sendPushNotification } from '../services/notificationService';
