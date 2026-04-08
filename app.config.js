@@ -12,7 +12,7 @@ module.exports = {
       url: 'https://u.expo.dev/d8d783ce-6cc0-4774-88db-00e82778910a',
       fallbackToCacheTimeout: 0,
     },
-    runtimeVersion: { policy: 'appVersion' },
+    runtimeVersion: { policy: 'sdkVersion' },
     assetBundlePatterns: ['**/*'],
     ios: { supportsTablet: true },
     extra: {
