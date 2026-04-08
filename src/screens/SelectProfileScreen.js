@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { Text, Icon, Image } from 'react-native-elements';
+import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Text, Image } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../components/Firebase';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -47,14 +47,14 @@ export class SelectProfileScreen extends Component {
         ) : (
           <View style={styles.cardsRow}>
             <TouchableOpacity style={styles.card} onPress={() => this.selectRole('player')}>
-              <Icon name="person" type="material" size={60} color="#008000" />
-              <Text h4 style={styles.cardTitle}>Player</Text>
+              <MaterialIcons name="person" size={60} color="#008000" />
+              <Text style={[{fontSize:18,fontWeight:'bold'},styles.cardTitle]}>Player</Text>
               <Text style={styles.cardDesc}>Track your performance, training and wellness</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.card} onPress={() => this.selectRole('coach')}>
-              <Icon name="people" type="material" size={60} color="#008000" />
-              <Text h4 style={styles.cardTitle}>Coach</Text>
+              <MaterialIcons name="people" size={60} color="#008000" />
+              <Text style={[{fontSize:18,fontWeight:'bold'},styles.cardTitle]}>Coach</Text>
               <Text style={styles.cardDesc}>Manage your players, send feedback and training</Text>
             </TouchableOpacity>
           </View>

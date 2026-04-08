@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  TextInput, Alert, ScrollView, ActivityIndicator,
+  TextInput, Alert, ScrollView, ActivityIndicator, Text,
 } from 'react-native';
-import { Text, Icon, Avatar } from 'react-native-elements';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppHeader } from '../components/AppHeader';
 import { auth, db } from '../components/Firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -102,9 +102,9 @@ export class ProfileScreen extends Component {
             <ScrollView contentContainerStyle={styles.container}>
               {/* Avatar + role */}
               <View style={styles.avatarSection}>
-                <Avatar rounded title={initials} size="large" containerStyle={{ backgroundColor: '#008000' }} />
+                <View style={{width:60,height:60,borderRadius:30,backgroundColor:'#008000',alignItems:'center',justifyContent:'center'}}><Text style={{color:'#fff',fontWeight:'bold',fontSize:24}}>{initials}</Text></View>
                 <View style={[styles.roleBadge, isCoach && styles.roleBadgeCoach]}>
-                  <Icon name={isCoach ? 'people' : 'person'} type="material" size={13} color={isCoach ? '#0D47A1' : '#008000'} />
+                  <MaterialIcons name={isCoach ? 'people' : 'person'} size={13} color={isCoach ? '#0D47A1' : '#008000'} />
                   <Text style={[styles.roleText, isCoach && styles.roleTextCoach]}>  {isCoach ? 'Coach' : 'Player'}</Text>
                 </View>
               </View>
@@ -153,7 +153,7 @@ export class ProfileScreen extends Component {
                   <ActivityIndicator size="small" color="#0D47A1" />
                 ) : (
                   <>
-                    <Icon name={isCoach ? 'person' : 'people'} type="material" size={16} color="#0D47A1" />
+                    <MaterialIcons name={isCoach ? 'person' : 'people'} size={16} color="#0D47A1" />
                     <Text style={styles.btnSwitchText}>  Switch to {isCoach ? 'Player' : 'Coach'} Mode</Text>
                   </>
                 )}
@@ -178,7 +178,7 @@ export class ProfileScreen extends Component {
 
             {/* Logout pinned at bottom — always visible */}
             <TouchableOpacity style={styles.logoutBar} onPress={this.logout}>
-              <Icon name="logout" type="material-community" size={18} color="#D32F2F" />
+              <MaterialCommunityIcons name="logout" size={18} color="#D32F2F" />
               <Text style={styles.logoutText}>  Sign Out</Text>
             </TouchableOpacity>
           </>

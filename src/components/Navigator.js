@@ -6,37 +6,47 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import 'react-native-gesture-handler';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
+// Deferred screen loader — screens are require()'d only when first rendered,
+// so a crash in any one screen won't prevent the app from starting.
+function lazy(loader) {
+  let Comp = null;
+  return function LazyScreen(props) {
+    if (!Comp) { const m = loader(); Comp = m.default || m; }
+    return <Comp {...props} />;
+  };
+}
+
 // Auth screens
-import onBoardScreen      from '../screens/onBoardScreen';
-import EmailInputScreen   from '../screens/EmailInputScreen';
-import LoginScreen        from '../screens/LoginScreen';
-import PasswordInputScreen from '../screens/PasswordInputScreen';
-import TouchAuthentication from '../screens/TouchAuthentification';
-import SelectProfileScreen from '../screens/SelectProfileScreen';
-import SetGoalScreen      from '../screens/SetGoalScreen';
-import CustomizeInterest  from '../screens/CustomizeInterest';
-import SelectGender       from '../screens/SelectGender';
+const onBoardScreen       = lazy(() => require('../screens/onBoardScreen'));
+const EmailInputScreen    = lazy(() => require('../screens/EmailInputScreen'));
+const LoginScreen         = lazy(() => require('../screens/LoginScreen'));
+const PasswordInputScreen = lazy(() => require('../screens/PasswordInputScreen'));
+const TouchAuthentication = lazy(() => require('../screens/TouchAuthentification'));
+const SelectProfileScreen = lazy(() => require('../screens/SelectProfileScreen'));
+const SetGoalScreen       = lazy(() => require('../screens/SetGoalScreen'));
+const CustomizeInterest   = lazy(() => require('../screens/CustomizeInterest'));
+const SelectGender        = lazy(() => require('../screens/SelectGender'));
 
 // Player screens
-import HomeScreen         from '../screens/HomeScreen';
-import EvaluationScreen   from '../screens/EvaluationScreen';
-import DashboardScreen    from '../screens/DashboardScreen';
-import TrainingScreen     from '../screens/TrainingScreen';
-import ScheduleScreen     from '../screens/ScheduleScreen';
-import ChatScreen         from '../screens/ChatScreen';
-import MatchReportScreen  from '../screens/MatchReportScreen';
-import SpeedTrackingScreen from '../screens/SpeedTrackingScreen';
-import AICoachScreen      from '../screens/AICoachScreen';
-import ProfileScreen      from '../screens/ProfileScreen';
+const HomeScreen          = lazy(() => require('../screens/HomeScreen'));
+const EvaluationScreen    = lazy(() => require('../screens/EvaluationScreen'));
+const DashboardScreen     = lazy(() => require('../screens/DashboardScreen'));
+const TrainingScreen      = lazy(() => require('../screens/TrainingScreen'));
+const ScheduleScreen      = lazy(() => require('../screens/ScheduleScreen'));
+const ChatScreen          = lazy(() => require('../screens/ChatScreen'));
+const MatchReportScreen   = lazy(() => require('../screens/MatchReportScreen'));
+const SpeedTrackingScreen = lazy(() => require('../screens/SpeedTrackingScreen'));
+const AICoachScreen       = lazy(() => require('../screens/AICoachScreen'));
+const ProfileScreen       = lazy(() => require('../screens/ProfileScreen'));
 
 // Coach screens
-import CoachHomeScreen         from '../screens/coach/CoachHomeScreen';
-import CoachRosterScreen       from '../screens/coach/CoachRosterScreen';
-import CoachPlayerDetailScreen from '../screens/coach/CoachPlayerDetailScreen';
-import CoachSendFeedbackScreen from '../screens/coach/CoachSendFeedbackScreen';
-import CoachAddTrainingScreen  from '../screens/coach/CoachAddTrainingScreen';
-import CoachCalendarScreen     from '../screens/coach/CoachCalendarScreen';
-import CoachDashboardScreen    from '../screens/coach/CoachDashboardScreen';
+const CoachHomeScreen         = lazy(() => require('../screens/coach/CoachHomeScreen'));
+const CoachRosterScreen       = lazy(() => require('../screens/coach/CoachRosterScreen'));
+const CoachPlayerDetailScreen = lazy(() => require('../screens/coach/CoachPlayerDetailScreen'));
+const CoachSendFeedbackScreen = lazy(() => require('../screens/coach/CoachSendFeedbackScreen'));
+const CoachAddTrainingScreen  = lazy(() => require('../screens/coach/CoachAddTrainingScreen'));
+const CoachCalendarScreen     = lazy(() => require('../screens/coach/CoachCalendarScreen'));
+const CoachDashboardScreen    = lazy(() => require('../screens/coach/CoachDashboardScreen'));
 
 const Stack = createStackNavigator();
 const Tab   = createBottomTabNavigator();

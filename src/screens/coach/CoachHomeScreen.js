@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, ActivityIndicator, Alert, Image, StatusBar,
+  ScrollView, ActivityIndicator, Alert, Image, StatusBar, Text,
 } from 'react-native';
-import { Text, Icon, Avatar } from 'react-native-elements';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
 import { doc, getDoc, collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -91,12 +91,7 @@ export class CoachHomeScreen extends Component {
                   onPress={() => this.props.navigation.navigate('ProfileScreen')}
                   style={styles.avatarWrap}
                 >
-                  <Avatar
-                    rounded
-                    title={initials}
-                    size={46}
-                    containerStyle={styles.avatar}
-                  />
+                  <View style={[{width:46,height:46,borderRadius:23,alignItems:'center',justifyContent:'center'},styles.avatar]}><Text style={{color:'#fff',fontWeight:'bold',fontSize:18}}>{initials}</Text></View>
                 </TouchableOpacity>
               </View>
               <View style={styles.roleBadge}>
@@ -107,7 +102,7 @@ export class CoachHomeScreen extends Component {
             {/* ── Alert banner ──────────────────────────────────── */}
             {newEvalCount > 0 && (
               <View style={styles.alertBanner}>
-                <Icon name="bell-ring-outline" type="material-community" size={18} color="#856404" />
+                <MaterialCommunityIcons name="bell-ring-outline" size={18} color="#856404" />
                 <Text style={styles.alertText}>
                   {'  '}{newEvalCount} player{newEvalCount > 1 ? 's' : ''} submitted new evaluations
                 </Text>
@@ -139,7 +134,7 @@ export class CoachHomeScreen extends Component {
                   activeOpacity={0.75}
                 >
                   <View style={[styles.iconCircle, { backgroundColor: card.color }]}>
-                    <Icon name={card.icon} type={card.type || 'material'} size={24} color="#fff" />
+                    <MaterialCommunityIcons name={card.icon} size={24} color="#fff" />
                   </View>
                   <Text style={[styles.cardLabel, { color: card.color }]}>{card.label}</Text>
                 </TouchableOpacity>
@@ -148,7 +143,7 @@ export class CoachHomeScreen extends Component {
 
             {/* ── Sign out ──────────────────────────────────────── */}
             <TouchableOpacity style={styles.logoutBtn} onPress={() => signOut(auth)}>
-              <Icon name="logout" type="material-community" size={15} color="#999" />
+              <MaterialCommunityIcons name="logout" size={15} color="#999" />
               <Text style={styles.logoutText}>  Sign Out</Text>
             </TouchableOpacity>
 

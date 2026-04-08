@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, Alert, FlatList,
+  ScrollView, Alert, FlatList, Text,
 } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../components/Firebase';
 import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -147,17 +147,17 @@ export class SpeedTrackingScreen extends Component {
           <View style={styles.controlRow}>
             {!running ? (
               <TouchableOpacity style={[styles.ctrlBtn, styles.ctrlStart]} onPress={this.start}>
-                <Icon name="play-arrow" type="material" color="white" size={28} />
+                <MaterialIcons name="play-arrow" size={28} color="white" />
                 <Text style={styles.ctrlText}>Start</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={[styles.ctrlBtn, styles.ctrlStop]} onPress={this.stop}>
-                <Icon name="stop" type="material" color="white" size={28} />
+                <MaterialIcons name="stop" size={28} color="white" />
                 <Text style={styles.ctrlText}>Stop</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={[styles.ctrlBtn, styles.ctrlReset]} onPress={this.reset}>
-              <Icon name="refresh" type="material" color="#555" size={28} />
+              <MaterialIcons name="refresh" size={28} color="#555" />
               <Text style={[styles.ctrlText, { color: '#555' }]}>Reset</Text>
             </TouchableOpacity>
           </View>

@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, SafeAreaView,
-  TouchableOpacity, Modal, TextInput, Alert,
+  TouchableOpacity, Modal, TextInput, Alert, Text, ActivityIndicator,
 } from 'react-native';
-import { Text, Icon, Button } from 'react-native-elements';
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../components/Firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
 
@@ -124,9 +124,9 @@ export class ScheduleScreen extends Component {
         <ScrollView contentContainerStyle={styles.container}>
           {/* Month nav */}
           <View style={styles.monthNav}>
-            <TouchableOpacity onPress={this.prevMonth}><Icon name="chevron-left" type="material" color="#008000" /></TouchableOpacity>
+            <TouchableOpacity onPress={this.prevMonth}><MaterialIcons name="chevron-left" size={24} color="#008000" /></TouchableOpacity>
             <Text style={styles.monthTitle}>{MONTHS[currentMonth]} {currentYear}</Text>
-            <TouchableOpacity onPress={this.nextMonth}><Icon name="chevron-right" type="material" color="#008000" /></TouchableOpacity>
+            <TouchableOpacity onPress={this.nextMonth}><MaterialIcons name="chevron-right" size={24} color="#008000" /></TouchableOpacity>
           </View>
 
           {/* Day labels */}
@@ -183,7 +183,7 @@ export class ScheduleScreen extends Component {
                   style={styles.addBtn}
                   onPress={() => this.setState({ showAddModal: true })}
                 >
-                  <Icon name="add" type="material" color="white" size={20} />
+                  <MaterialIcons name="add" size={20} color="white" />
                   <Text style={{ color: 'white', marginLeft: 4, fontWeight: '600' }}>Add Event</Text>
                 </TouchableOpacity>
               </View>
@@ -200,7 +200,7 @@ export class ScheduleScreen extends Component {
                         <Text style={styles.eventTitle}>{ev.title}</Text>
                       </View>
                       <TouchableOpacity onPress={() => this.deleteEvent(selectedDate, ev.id)}>
-                        <Icon name="delete-outline" type="material" color="#999" size={20} />
+                        <MaterialIcons name="delete-outline" size={20} color="#999" />
                       </TouchableOpacity>
                     </View>
                   );
@@ -234,8 +234,8 @@ export class ScheduleScreen extends Component {
                 ))}
               </View>
               <View style={styles.modalBtns}>
-                <Button title="Cancel" type="outline" buttonStyle={{ borderColor: '#ccc' }} titleStyle={{ color: '#666' }} containerStyle={{ flex: 1, marginRight: 8 }} onPress={() => this.setState({ showAddModal: false, newEventTitle: '' })} />
-                <Button title="Add" buttonStyle={{ backgroundColor: '#008000' }} containerStyle={{ flex: 1 }} loading={loading} onPress={this.addEvent} />
+                <TouchableOpacity style={{ flex: 1, borderWidth:1, borderColor:'#ccc', borderRadius:8, paddingVertical:10, alignItems:'center', marginRight: 8 }} onPress={() => this.setState({ showAddModal: false, newEventTitle: '' })}><Text style={{ color: '#666' }}>Cancel</Text></TouchableOpacity>
+                <TouchableOpacity style={{ flex: 1, backgroundColor: '#008000', borderRadius: 8, paddingVertical: 10, alignItems: 'center' }} onPress={this.addEvent} disabled={loading}>{loading ? <ActivityIndicator size="small" color="white" /> : <Text style={{ color: 'white', fontWeight: 'bold' }}>Add</Text>}</TouchableOpacity>
               </View>
             </View>
           </View>

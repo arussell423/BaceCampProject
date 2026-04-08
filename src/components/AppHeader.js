@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
+import { View, StyleSheet, TouchableOpacity, Image, Text } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 /**
  * Shared header bar for all post-login screens.
@@ -14,7 +14,7 @@ export function AppHeader({ navigation, title, homeScreen }) {
     <View style={styles.bar}>
       {canGoBack ? (
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.side}>
-          <Icon name="arrow-back" type="material" color="#008000" size={24} />
+        <MaterialIcons name="arrow-back" size={24} color="#008000" />
         </TouchableOpacity>
       ) : (
         <View style={styles.side} />

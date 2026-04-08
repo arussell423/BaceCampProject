@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Text, Button } from 'react-native-elements';
+import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 
 const genders = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
 
@@ -12,7 +11,7 @@ export class SelectGender extends Component {
     const { selected } = this.state;
     return (
       <View style={styles.container}>
-        <Text h3 style={styles.title}>What is your gender?</Text>
+        <Text style={[{fontSize:20,fontWeight:'bold'},styles.title]}>What is your gender?</Text>
         <Text style={styles.subtitle}>This helps us personalise your experience</Text>
         <View style={styles.optionsContainer}>
           {genders.map((g) => (
@@ -25,14 +24,13 @@ export class SelectGender extends Component {
             </TouchableOpacity>
           ))}
         </View>
-        <Button
-          title="Continue"
+        <TouchableOpacity
+          style={[styles.btn, { width: 300, marginTop: 30, paddingVertical: 12, alignItems: 'center' }, !selected && { opacity: 0.5 }]}
           disabled={!selected}
-          buttonStyle={styles.btn}
-          titleStyle={{ fontWeight: 'bold', fontSize: 18 }}
-          containerStyle={{ width: 300, marginTop: 30 }}
           onPress={() => this.props.navigation.navigate('SelectProfileScreen')}
-        />
+        >
+          <Text style={{ fontWeight: 'bold', fontSize: 18, color: '#fff' }}>Continue</Text>
+        </TouchableOpacity>
       </View>
     );
   }

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { Text, Button, Icon } from 'react-native-elements';
+import { View, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
 export class TouchAuthentification extends Component {
   static navigationOptions = { headerShown: false };
@@ -12,26 +12,23 @@ export class TouchAuthentification extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <Icon name="fingerprint" type="material" size={80} color="#008000" />
-        <Text h3 style={styles.title}>Enable Fingerprint Login</Text>
+        <MaterialIcons name="fingerprint" size={80} color="#008000" />
+        <Text style={[{fontSize:20,fontWeight:'bold'},styles.title]}>Enable Fingerprint Login</Text>
         <Text style={styles.subtitle}>
           Log in faster and more securely with your fingerprint or Face ID.
         </Text>
-        <Button
-          title="Enable Biometrics"
-          buttonStyle={styles.btn}
-          titleStyle={{ fontWeight: 'bold', fontSize: 18 }}
-          containerStyle={{ width: 300, marginBottom: 16 }}
+        <TouchableOpacity
+          style={[styles.btn, { width: 300, marginBottom: 16, paddingVertical: 12, alignItems: 'center' }]}
           onPress={this.handleBiometric}
-        />
-        <Button
-          title="Skip for now"
-          type="outline"
-          buttonStyle={styles.btnOutline}
-          titleStyle={{ fontSize: 16, color: '#008000' }}
-          containerStyle={{ width: 300 }}
+        >
+          <Text style={{ fontWeight: 'bold', fontSize: 18, color: 'white' }}>Enable Biometrics</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.btnOutline, { width: 300, paddingVertical: 12, alignItems: 'center' }]}
           onPress={() => this.props.navigation.navigate('SelectProfileScreen')}
-        />
+        >
+          <Text style={{ fontSize: 16, color: '#008000' }}>Skip for now</Text>
+        </TouchableOpacity>
       </View>
     );
   }

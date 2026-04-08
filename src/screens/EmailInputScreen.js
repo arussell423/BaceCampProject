@@ -2,8 +2,9 @@ import React, {Component} from 'react';
 import {
   View, StyleSheet, Platform, KeyboardAvoidingView,
   ScrollView, StatusBar, Image, Dimensions, TouchableOpacity,
+  Text, TextInput,
 } from 'react-native';
-import { Text, Icon, Input, Button } from 'react-native-elements';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
 
@@ -47,44 +48,43 @@ export class EmailInputScreen extends Component {
             >
               {fp => (
                 <>
-                  <Input
-                    leftIcon={<Icon name="account-outline" type="material-community" color="#008000" size={20} />}
-                    placeholder="Full name"
-                    inputContainerStyle={styles.inputContainer}
-                    inputStyle={styles.inputText}
-                    placeholderTextColor="#aaa"
-                    autoCapitalize="words"
-                    autoCorrect={false}
-                    returnKeyType="next"
-                    onChangeText={fp.handleChange('name')}
-                    errorMessage={fp.touched.name && fp.errors.name ? fp.errors.name : ''}
-                    errorStyle={styles.errorText}
-                  />
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="account-outline" size={20} color="#008000" />
+                    <TextInput
+                      placeholder="Full name"
+                      style={[styles.inputText, {flex:1, paddingVertical:10, paddingHorizontal:8}]}
+                      placeholderTextColor="#aaa"
+                      autoCapitalize="words"
+                      autoCorrect={false}
+                      returnKeyType="next"
+                      onChangeText={fp.handleChange('name')}
+                    />
+                  </View>
+                  {fp.touched.name && fp.errors.name ? <Text style={styles.errorText}>{fp.errors.name}</Text> : null}
 
-                  <Input
-                    leftIcon={<Icon name="email-outline" type="material-community" color="#008000" size={20} />}
-                    placeholder="Email address"
-                    inputContainerStyle={styles.inputContainer}
-                    inputStyle={styles.inputText}
-                    placeholderTextColor="#aaa"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="email-address"
-                    returnKeyType="done"
-                    onSubmitEditing={fp.handleSubmit}
-                    onChangeText={fp.handleChange('email')}
-                    errorMessage={fp.touched.email && fp.errors.email ? fp.errors.email : ''}
-                    errorStyle={styles.errorText}
-                  />
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="email-outline" size={20} color="#008000" />
+                    <TextInput
+                      placeholder="Email address"
+                      style={[styles.inputText, {flex:1, paddingVertical:10, paddingHorizontal:8}]}
+                      placeholderTextColor="#aaa"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                      returnKeyType="done"
+                      onSubmitEditing={fp.handleSubmit}
+                      onChangeText={fp.handleChange('email')}
+                    />
+                  </View>
+                  {fp.touched.email && fp.errors.email ? <Text style={styles.errorText}>{fp.errors.email}</Text> : null}
 
-                  <Button
-                    title="Continue →"
-                    buttonStyle={styles.btn}
-                    titleStyle={styles.btnTitle}
-                    containerStyle={styles.btnContainer}
+                  <TouchableOpacity
+                    style={[styles.btn, styles.btnContainer, !(fp.isValid && fp.dirty) && { opacity: 0.5 }]}
                     onPress={fp.handleSubmit}
                     disabled={!(fp.isValid && fp.dirty)}
-                  />
+                  >
+                    <Text style={styles.btnTitle}>Continue →</Text>
+                  </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.signinWrap}
@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     borderWidth: 1, borderColor: '#ddd', borderRadius: 12,
     paddingHorizontal: 10, backgroundColor: '#FAFAFA', marginBottom: 2,
+    flexDirection: 'row', alignItems: 'center',
   },
   inputText: { fontSize: 15, color: '#222' },
   errorText: { color: '#E53935', fontSize: 12 },

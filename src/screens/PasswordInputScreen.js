@@ -2,8 +2,9 @@ import React, { Component } from "react";
 import {
   View, StyleSheet, Platform, KeyboardAvoidingView,
   ScrollView, StatusBar, Image, Dimensions, TouchableOpacity,
+  Text, TextInput, ActivityIndicator,
 } from "react-native";
-import { Text, Icon, Input, Button } from "react-native-elements";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth, db } from "../components/Firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
@@ -67,47 +68,44 @@ export class PasswordInputScreen extends Component {
             >
               {fp => (
                 <>
-                  <Input
-                    leftIcon={<Icon name="lock-outline" type="material-community" color="#008000" size={20} />}
-                    placeholder="Password"
-                    inputContainerStyle={styles.inputContainer}
-                    inputStyle={styles.inputText}
-                    placeholderTextColor="#aaa"
-                    autoCapitalize="none"
-                    secureTextEntry={true}
-                    autoCorrect={false}
-                    returnKeyType="next"
-                    onChangeText={fp.handleChange("password")}
-                    errorMessage={fp.touched.password && fp.errors.password ? fp.errors.password : ""}
-                    errorStyle={styles.errorText}
-                  />
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="lock-outline" size={20} color="#008000" />
+                    <TextInput
+                      placeholder="Password"
+                      style={[styles.inputText, {flex:1, paddingVertical:10, paddingHorizontal:8}]}
+                      placeholderTextColor="#aaa"
+                      autoCapitalize="none"
+                      secureTextEntry={true}
+                      autoCorrect={false}
+                      returnKeyType="next"
+                      onChangeText={fp.handleChange("password")}
+                    />
+                  </View>
+                  {fp.touched.password && fp.errors.password ? <Text style={styles.errorText}>{fp.errors.password}</Text> : null}
 
-                  <Input
-                    leftIcon={<Icon name="lock-check-outline" type="material-community" color="#008000" size={20} />}
-                    placeholder="Confirm password"
-                    inputContainerStyle={styles.inputContainer}
-                    inputStyle={styles.inputText}
-                    placeholderTextColor="#aaa"
-                    autoCapitalize="none"
-                    secureTextEntry={true}
-                    autoCorrect={false}
-                    returnKeyType="done"
-                    onSubmitEditing={fp.handleSubmit}
-                    onChangeText={fp.handleChange("passwordConfirm")}
-                    errorMessage={fp.touched.passwordConfirm && fp.errors.passwordConfirm ? fp.errors.passwordConfirm : ""}
-                    errorStyle={styles.errorText}
-                  />
+                  <View style={styles.inputContainer}>
+                    <MaterialCommunityIcons name="lock-check-outline" size={20} color="#008000" />
+                    <TextInput
+                      placeholder="Confirm password"
+                      style={[styles.inputText, {flex:1, paddingVertical:10, paddingHorizontal:8}]}
+                      placeholderTextColor="#aaa"
+                      autoCapitalize="none"
+                      secureTextEntry={true}
+                      autoCorrect={false}
+                      returnKeyType="done"
+                      onSubmitEditing={fp.handleSubmit}
+                      onChangeText={fp.handleChange("passwordConfirm")}
+                    />
+                  </View>
+                  {fp.touched.passwordConfirm && fp.errors.passwordConfirm ? <Text style={styles.errorText}>{fp.errors.passwordConfirm}</Text> : null}
 
-                  <Button
-                    title="Create Account"
-                    loading={fp.isSubmitting}
-                    loadingProps={{ size: "small", color: "white" }}
-                    buttonStyle={styles.btn}
-                    titleStyle={styles.btnTitle}
-                    containerStyle={styles.btnContainer}
+                  <TouchableOpacity
+                    style={[styles.btn, styles.btnContainer, !(fp.isValid && fp.dirty) && { opacity: 0.5 }]}
                     onPress={fp.handleSubmit}
-                    disabled={!(fp.isValid && fp.dirty)}
-                  />
+                    disabled={!(fp.isValid && fp.dirty) || fp.isSubmitting}
+                  >
+                    {fp.isSubmitting ? <ActivityIndicator size="small" color="white" /> : <Text style={styles.btnTitle}>Create Account</Text>}
+                  </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.backWrap}
@@ -152,6 +150,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     borderWidth: 1, borderColor: "#ddd", borderRadius: 12,
     paddingHorizontal: 10, backgroundColor: "#FAFAFA", marginBottom: 2,
+    flexDirection: 'row', alignItems: 'center',
   },
   inputText: { fontSize: 15, color: "#222" },
   errorText: { color: "#E53935", fontSize: 12 },

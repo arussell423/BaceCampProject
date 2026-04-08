@@ -3,9 +3,9 @@ import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, FlatList,
   TextInput, TouchableOpacity, KeyboardAvoidingView,
-  Platform, ActivityIndicator,
+  Platform, ActivityIndicator, Text,
 } from 'react-native';
-import { Text, Icon, Avatar } from 'react-native-elements';
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../components/Firebase';
 import {
   collection, query, orderBy, onSnapshot,
@@ -77,12 +77,7 @@ export class ChatScreen extends Component {
     return (
       <View style={[styles.msgRow, isMe ? styles.msgRowRight : styles.msgRowLeft]}>
         {!isMe && (
-          <Avatar
-            rounded
-            title={initials}
-            size={32}
-            containerStyle={styles.avatarCoach}
-          />
+          <View style={[{width:32,height:32,borderRadius:16,backgroundColor:'#1565C0',alignItems:'center',justifyContent:'center'},styles.avatarCoach]}><Text style={{color:'#fff',fontWeight:'bold',fontSize:12}}>{initials}</Text></View>
         )}
         <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleCoach]}>
           {!isMe && (
@@ -100,12 +95,7 @@ export class ChatScreen extends Component {
           )}
         </View>
         {isMe && (
-          <Avatar
-            rounded
-            title={(this.displayName)[0].toUpperCase()}
-            size={32}
-            containerStyle={styles.avatarMe}
-          />
+          <View style={[{width:32,height:32,borderRadius:16,backgroundColor:'#2E7D32',alignItems:'center',justifyContent:'center'},styles.avatarMe]}><Text style={{color:'#fff',fontWeight:'bold',fontSize:12}}>{(this.displayName)[0].toUpperCase()}</Text></View>
         )}
       </View>
     );
@@ -128,7 +118,7 @@ export class ChatScreen extends Component {
           >
             {messages.length === 0 ? (
               <View style={styles.emptyState}>
-                <Icon name="chat-bubble-outline" type="material" size={52} color="#ccc" />
+                <MaterialIcons name="chat-bubble-outline" size={52} color="#ccc" />
                 <Text style={styles.emptyTitle}>No messages yet</Text>
                 <Text style={styles.emptyText}>
                   Send a message to your coach — they'll see it and can reply here.
@@ -161,7 +151,7 @@ export class ChatScreen extends Component {
                 onPress={this.sendMessage}
                 disabled={!inputText.trim()}
               >
-                <Icon name="send" type="material" color="white" size={20} />
+                <MaterialIcons name="send" size={20} color="white" />
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>

@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  TextInput, ScrollView, Alert, ActivityIndicator,
+  TextInput, ScrollView, Alert, ActivityIndicator, Text,
 } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
 import { auth, db } from '../../components/Firebase';
 import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 

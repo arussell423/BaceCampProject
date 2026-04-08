@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { Text, Button, Icon } from "react-native-elements";
+import { View, StyleSheet, TouchableOpacity, ScrollView, Text } from "react-native";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const interests = [
   { key: "singles",     label: "Singles",           icon: "account",           type: "material-community", color: "#1B5E20" },
@@ -27,27 +27,26 @@ export class CustomizeInterest extends Component {
     const { selected } = this.state;
     return (
       <ScrollView contentContainerStyle={styles.container}>
-        <Text h3 style={styles.title}>Your Interests</Text>
+        <Text style={[{fontSize:20,fontWeight:'bold'},styles.title]}>Your Interests</Text>
         <Text style={styles.subtitle}>Select topics you would like to focus on</Text>
         <View style={styles.grid}>
           {interests.map((item) => {
             const active = selected.includes(item.key);
             return (
               <TouchableOpacity key={item.key} style={[styles.card, active && { borderColor: item.color, backgroundColor: item.color + "12" }]} onPress={() => this.toggle(item.key)}>
-                <Icon name={item.icon} type={item.type} size={30} color={active ? item.color : "#999"} />
+                <MaterialCommunityIcons name={item.icon} size={30} color={active ? item.color : "#999"} />
                 <Text style={[styles.label, active && { color: item.color, fontWeight: "700" }]}>{item.label}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
-        <Button
-          title="Continue"
+        <TouchableOpacity
+          style={[styles.btn, { width: 300, marginTop: 20, paddingVertical: 12, alignItems: 'center' }, selected.length === 0 && { opacity: 0.5 }]}
           disabled={selected.length === 0}
-          buttonStyle={styles.btn}
-          titleStyle={{ fontWeight: "bold", fontSize: 18 }}
-          containerStyle={{ width: 300, marginTop: 20 }}
           onPress={() => this.props.navigation.navigate("SelectGender")}
-        />
+        >
+          <Text style={{ fontWeight: "bold", fontSize: 18, color: '#fff' }}>Continue</Text>
+        </TouchableOpacity>
       </ScrollView>
     );
   }

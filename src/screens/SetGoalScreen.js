@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { Text, Button, Icon } from "react-native-elements";
+import { View, StyleSheet, TouchableOpacity, ScrollView, Text } from "react-native";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const goals = [
   { key: "improve_fitness",   label: "Improve Fitness",    icon: "heart-pulse",         type: "material-community", color: "#C62828" },
@@ -25,27 +25,26 @@ export class SetGoalScreen extends Component {
     const { selected } = this.state;
     return (
       <ScrollView contentContainerStyle={styles.container}>
-        <Text h3 style={styles.title}>Set Your Goals</Text>
+        <Text style={[{fontSize:20,fontWeight:'bold'},styles.title]}>Set Your Goals</Text>
         <Text style={styles.subtitle}>Choose one or more goals — you can change these later</Text>
         <View style={styles.grid}>
           {goals.map((g) => {
             const active = selected.includes(g.key);
             return (
               <TouchableOpacity key={g.key} style={[styles.card, active && { borderColor: g.color, backgroundColor: g.color + "12" }]} onPress={() => this.toggle(g.key)}>
-                <Icon name={g.icon} type={g.type} size={30} color={active ? g.color : "#999"} />
+                <MaterialCommunityIcons name={g.icon} size={30} color={active ? g.color : "#999"} />
                 <Text style={[styles.label, active && { color: g.color, fontWeight: "700" }]}>{g.label}</Text>
               </TouchableOpacity>
             );
           })}
         </View>
-        <Button
-          title="Continue"
+        <TouchableOpacity
+          style={[styles.btn, { width: 300, marginTop: 20, paddingVertical: 12, alignItems: 'center' }, selected.length === 0 && { opacity: 0.5 }]}
           disabled={selected.length === 0}
-          buttonStyle={styles.btn}
-          titleStyle={{ fontWeight: "bold", fontSize: 18 }}
-          containerStyle={{ width: 300, marginTop: 20 }}
           onPress={() => this.props.navigation.navigate("CustomizeInterest")}
-        />
+        >
+          <Text style={{ fontWeight: "bold", fontSize: 18, color: '#fff' }}>Continue</Text>
+        </TouchableOpacity>
       </ScrollView>
     );
   }

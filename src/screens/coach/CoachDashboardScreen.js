@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, Text,
 } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
@@ -99,7 +99,7 @@ export class CoachDashboardScreen extends Component {
       <SafeAreaView style={dbStyles.safeArea}>
         <View style={dbStyles.headerBar}>
           <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-            <Icon name="arrow-back" type="material" color="#008000" />
+            <MaterialIcons name="arrow-back" size={24} color="#008000" />
           </TouchableOpacity>
           <Text style={dbStyles.headerTitle}>Team Dashboard</Text>
           <View style={{ width: 24 }} />
@@ -138,9 +138,9 @@ export class CoachDashboardScreen extends Component {
                   })}
                 >
                   <View style={dbStyles.playerHeader}>
-                    {stale && <Icon name="alert-outline" type="material-community" size={16} color="#E65100" style={{ marginRight: 6 }} />}
+                    {stale && <MaterialCommunityIcons name="alert-outline" size={16} color="#E65100" style={{ marginRight: 6 }} />}
                     <Text style={dbStyles.playerName}>{player.name || player.email}</Text>
-                    <Icon name="chevron-right" type="material" color="#ccc" size={20} />
+                    <MaterialIcons name="chevron-right" size={20} color="#ccc" />
                   </View>
 
                   <View style={dbStyles.metricsRow}>

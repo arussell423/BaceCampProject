@@ -2,9 +2,9 @@ import React, {Component} from 'react';
 import {
   View, StyleSheet, Platform, Alert, ActivityIndicator,
   TouchableOpacity, KeyboardAvoidingView, ScrollView,
-  StatusBar, Image, Dimensions,
+  StatusBar, Image, Dimensions, Text, TextInput,
 } from 'react-native';
-import { Text, Icon, Input, Button, SocialIcon } from 'react-native-elements';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth } from '../components/Firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import {Formik} from 'formik';
@@ -60,38 +60,38 @@ export class LoginScreen extends Component {
                   validationSchema={LoginSchema}>
                   {formikProps => (
                     <>
-                      <Input
-                        leftIcon={<Icon name="email-outline" type="material-community" color="#008000" size={20} />}
-                        onChangeText={formikProps.handleChange('email')}
-                        placeholder="Email address"
-                        inputContainerStyle={styles.inputContainer}
-                        inputStyle={styles.inputText}
-                        placeholderTextColor="#aaa"
-                        autoCapitalize="none"
-                        secureTextEntry={false}
-                        autoCorrect={false}
-                        keyboardType="email-address"
-                        returnKeyType="next"
-                        errorMessage={formikProps.errors.email}
-                        errorStyle={styles.errorText}
-                      />
+                      <View style={styles.inputContainer}>
+                        <MaterialCommunityIcons name="email-outline" size={20} color="#008000" />
+                        <TextInput
+                          style={[styles.inputText, {flex:1, paddingVertical:10, paddingHorizontal:8}]}
+                          onChangeText={formikProps.handleChange('email')}
+                          placeholder="Email address"
+                          placeholderTextColor="#aaa"
+                          autoCapitalize="none"
+                          secureTextEntry={false}
+                          autoCorrect={false}
+                          keyboardType="email-address"
+                          returnKeyType="next"
+                        />
+                      </View>
+                      {formikProps.errors.email ? <Text style={styles.errorText}>{formikProps.errors.email}</Text> : null}
 
-                      <Input
-                        leftIcon={<Icon name="lock-outline" type="material-community" color="#008000" size={20} />}
-                        onChangeText={formikProps.handleChange('password')}
-                        inputContainerStyle={styles.inputContainer}
-                        inputStyle={styles.inputText}
-                        placeholderTextColor="#aaa"
-                        placeholder="Password"
-                        autoCapitalize="none"
-                        secureTextEntry={true}
-                        autoCorrect={false}
-                        keyboardType="default"
-                        returnKeyType="done"
-                        onSubmitEditing={formikProps.handleSubmit}
-                        errorMessage={formikProps.errors.password}
-                        errorStyle={styles.errorText}
-                      />
+                      <View style={styles.inputContainer}>
+                        <MaterialCommunityIcons name="lock-outline" size={20} color="#008000" />
+                        <TextInput
+                          style={[styles.inputText, {flex:1, paddingVertical:10, paddingHorizontal:8}]}
+                          onChangeText={formikProps.handleChange('password')}
+                          placeholder="Password"
+                          placeholderTextColor="#aaa"
+                          autoCapitalize="none"
+                          secureTextEntry={true}
+                          autoCorrect={false}
+                          keyboardType="default"
+                          returnKeyType="done"
+                          onSubmitEditing={formikProps.handleSubmit}
+                        />
+                      </View>
+                      {formikProps.errors.password ? <Text style={styles.errorText}>{formikProps.errors.password}</Text> : null}
 
                       <TouchableOpacity
                         onPress={() => Alert.alert('Forgot Password', 'Please contact your coach or re-register.')}
@@ -100,16 +100,13 @@ export class LoginScreen extends Component {
                         <Text style={styles.forgotText}>Forgot Password?</Text>
                       </TouchableOpacity>
 
-                      <Button
-                        title="Sign In"
-                        loading={formikProps.isSubmitting}
-                        loadingProps={{ size: 'small', color: 'white' }}
-                        buttonStyle={styles.loginBtn}
-                        titleStyle={styles.loginBtnTitle}
-                        containerStyle={styles.loginBtnContainer}
+                      <TouchableOpacity
+                        style={[styles.loginBtn, styles.loginBtnContainer, !(formikProps.isValid && formikProps.dirty) && { opacity: 0.5 }]}
                         onPress={formikProps.handleSubmit}
                         disabled={!(formikProps.isValid && formikProps.dirty)}
-                      />
+                      >
+                        {formikProps.isSubmitting ? <ActivityIndicator size="small" color="white" /> : <Text style={styles.loginBtnTitle}>Sign In</Text>}
+                      </TouchableOpacity>
 
                       <View style={styles.dividerRow}>
                         <View style={styles.divider} />
@@ -118,8 +115,12 @@ export class LoginScreen extends Component {
                       </View>
 
                       <View style={styles.socialRow}>
-                        <SocialIcon type="google"   light rounded onPress={() => Alert.alert('Coming Soon', 'Google sign-in is coming soon.')} />
-                        <SocialIcon type="facebook" light rounded onPress={() => Alert.alert('Coming Soon', 'Facebook sign-in is coming soon.')} />
+                        <TouchableOpacity onPress={() => Alert.alert('Coming Soon', 'Google sign-in is coming soon.')} style={{backgroundColor:'#DB4437',borderRadius:20,width:44,height:44,alignItems:'center',justifyContent:'center',marginHorizontal:8}}>
+                          <Text style={{color:'white',fontWeight:'bold',fontSize:12}}>G</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => Alert.alert('Coming Soon', 'Facebook sign-in is coming soon.')} style={{backgroundColor:'#3b5998',borderRadius:20,width:44,height:44,alignItems:'center',justifyContent:'center',marginHorizontal:8}}>
+                          <Text style={{color:'white',fontWeight:'bold',fontSize:12}}>f</Text>
+                        </TouchableOpacity>
                       </View>
 
                       <TouchableOpacity
@@ -176,6 +177,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     borderWidth: 1, borderColor: '#ddd', borderRadius: 12,
     paddingHorizontal: 10, backgroundColor: '#FAFAFA', marginBottom: 2,
+    flexDirection: 'row', alignItems: 'center',
   },
   inputText: { fontSize: 15, color: '#222' },
   errorText: { color: '#E53935', fontSize: 12 },

@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, ActivityIndicator, TextInput, Dimensions, Alert,
+  ScrollView, ActivityIndicator, TextInput, Dimensions, Alert, Text,
 } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
+import { MaterialIcons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
 import { auth, db } from '../../components/Firebase';
 import {
@@ -277,7 +277,7 @@ export class CoachPlayerDetailScreen extends Component {
             onPress={this.sendChatReply}
             disabled={!chatInput.trim()}
           >
-            <Icon name="send" type="material" color="white" size={18} />
+            <MaterialIcons name="send" size={18} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -344,7 +344,7 @@ export class CoachPlayerDetailScreen extends Component {
               playerEmail: this.playerEmail,
             })}
           >
-            <Icon name="feedback" type="material" color="white" size={18} />
+            <MaterialIcons name="feedback" color="white" size={18} />
             <Text style={styles.actionBtnText}>Send Feedback</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -354,7 +354,7 @@ export class CoachPlayerDetailScreen extends Component {
               playerEmail: this.playerEmail,
             })}
           >
-            <Icon name="fitness-center" type="material" color="white" size={18} />
+            <MaterialIcons name="fitness-center" color="white" size={18} />
             <Text style={styles.actionBtnText}>Add Training</Text>
           </TouchableOpacity>
         </View>

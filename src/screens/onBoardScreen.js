@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import { View, StyleSheet, Dimensions, Image, TouchableOpacity } from "react-native";
-import { Text, Button, Icon } from "react-native-elements";
+import { View, StyleSheet, Dimensions, Image, TouchableOpacity, Text } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 
@@ -38,13 +38,13 @@ export class onBoardScreen extends Component {
         <View style={styles.featureRow}>
           {slides.map((s, i) => (
             <View key={s.key} style={[styles.featureChip, i === page && { borderColor: s.color, backgroundColor: s.color + "18" }]}>
-              <Icon name={s.icon} type={s.type} size={20} color={i === page ? s.color : "#aaa"} />
+              <MaterialCommunityIcons name={s.icon} size={20} color={i === page ? s.color : "#aaa"} />
             </View>
           ))}
         </View>
 
         {/* Slide content */}
-        <Text h4 style={styles.title}>{slide.title}</Text>
+        <Text style={styles.title}>{slide.title}</Text>
         <Text style={styles.text}>{slide.text}</Text>
 
         {/* Progress dots */}
@@ -54,13 +54,9 @@ export class onBoardScreen extends Component {
           ))}
         </View>
 
-        <Button
-          title={page < slides.length - 1 ? "Next" : "Get Started"}
-          buttonStyle={styles.btn}
-          titleStyle={{ fontWeight: "bold", fontSize: 18 }}
-          containerStyle={{ width: width * 0.75, marginTop: 28 }}
-          onPress={this.next}
-        />
+        <TouchableOpacity style={styles.btn} onPress={this.next}>
+          <Text style={styles.btnText}>{page < slides.length - 1 ? "Next" : "Get Started"}</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.coachLink}
@@ -78,12 +74,13 @@ const styles = StyleSheet.create({
   heroLogo:    { width: width * 0.75, height: 180, marginBottom: 32 },
   featureRow:  { flexDirection: "row", marginBottom: 28 },
   featureChip: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "#ddd", marginHorizontal: 8, backgroundColor: "white" },
-  title:       { textAlign: "center", marginBottom: 12, color: "#1A1A1A", fontWeight: "700" },
+  title:       { textAlign: "center", marginBottom: 12, color: "#1A1A1A", fontWeight: "700", fontSize: 22 },
   text:        { textAlign: "center", color: "#666", fontSize: 15, lineHeight: 24, maxWidth: 300 },
   dotsRow:     { flexDirection: "row", marginTop: 28 },
   dot:         { width: 10, height: 10, borderRadius: 5, backgroundColor: "#ccc", marginHorizontal: 5 },
   dotActive:   { backgroundColor: "#008000" },
-  btn:         { backgroundColor: "#008000", borderRadius: 12 },
+  btn:         { backgroundColor: "#008000", borderRadius: 12, width: width * 0.75, marginTop: 28, paddingVertical: 16, alignItems: "center" },
+  btnText:     { color: "#fff", fontWeight: "bold", fontSize: 18 },
   coachLink:   { marginTop: 20, padding: 8 },
   coachLinkText: { color: "#008000", fontSize: 14, textDecorationLine: "underline" },
 });

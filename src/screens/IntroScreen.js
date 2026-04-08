@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
-import {View, StyleSheet,ActivityIndicator,TouchableOpacity,} from 'react-native';
-import {Text, Icon, Image, Button} from 'react-native-elements';
+import {View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, Image} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
     const styles = StyleSheet.create({
         container: {
             backgroundColor: '#ffffff',
@@ -44,37 +44,29 @@ export class IntroScreen extends Component {
             
             <View style={styles.container}>
         <View style={styles.headerContainer}>
-            <Icon name="md-tennisball-outline" size={50} type="ionicon" />
-            <Text h4>Welcome to Bace Camp</Text>
-            <Text h5 style={{ textAlign: 'center' }}>
+            <Ionicons name="md-tennisball-outline" size={50} color="#000" />
+            <Text style={{fontSize:18,fontWeight:'bold'}}>Welcome to Bace Camp</Text>
+            <Text style={{fontSize:16,fontWeight:'bold', textAlign: 'center' }}>
                             The best App for Tennis Fitness workouts and Competition planner
             </Text>
                     </View>
                     <Image
                 source={require('../assets/image/bACE_CAMP-logo-transparent.png')}
                 style={{width: '100%', height: 300}}
-                PlaceholderContent={<ActivityIndicator />}
                     />
                     <View style={styles.contentView}>
-          <Button
+          <TouchableOpacity
             onPress={() => this.props.navigation.navigate('EmailInputScreen')}
-            title="Get started"
-            loading={false}
-            loadingProps={{size: 'small', color: 'white'}}
-            buttonStyle={{
-              backgroundColor: '#008000',
-              borderRadius: 5,
-            }}
-            titleStyle={{fontWeight: 'bold', fontSize: 23}}
-            containerStyle={{marginVertical: 10, height: 50, width: 300}}
-            underlayColor="transparent"
-          />
-          <Text h4 style={{textAlign: 'center', color: 'grey'}}>
+            style={{ backgroundColor: '#008000', borderRadius: 5, marginVertical: 10, height: 50, width: 300, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Text style={{fontWeight: 'bold', fontSize: 23, color: 'white'}}>Get started</Text>
+          </TouchableOpacity>
+          <Text style={{fontSize:18,fontWeight:'bold',textAlign: 'center', color: 'grey'}}>
             Already have an account?
           </Text>
           <TouchableOpacity
             onPress={() => this.props.navigation.navigate('LoginScreen')}>
-            <Text h4 style={{textAlign: 'center', color: '#87cefa'}}>
+            <Text style={{fontSize:18,fontWeight:'bold',textAlign: 'center', color: '#87cefa'}}>
               Sign in
             </Text>
           </TouchableOpacity>

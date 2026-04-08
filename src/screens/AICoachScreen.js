@@ -3,9 +3,9 @@ import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
   TextInput, FlatList, KeyboardAvoidingView, Platform,
-  ActivityIndicator, ScrollView,
+  ActivityIndicator, ScrollView, Text,
 } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../components/Firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import Constants from 'expo-constants';
@@ -196,7 +196,7 @@ export class AICoachScreen extends Component {
             >
               {loading
                 ? <ActivityIndicator size="small" color="white" />
-                : <Icon name="send" type="material" color="white" size={20} />}
+                : <MaterialIcons name="send" size={20} color="white" />}
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>

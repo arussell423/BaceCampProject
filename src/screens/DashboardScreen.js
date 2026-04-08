@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
-  View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Dimensions,
+  View, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, Dimensions, Text,
 } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
 import { LineChart } from 'react-native-chart-kit';
 import { auth, db } from '../components/Firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';

@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, SafeAreaView,
-  TouchableOpacity, FlatList,
+  TouchableOpacity, FlatList, Text,
 } from 'react-native';
-import { Text, Icon, Button } from 'react-native-elements';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { auth, db } from '../components/Firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -81,22 +81,22 @@ class WorkoutCard extends Component {
 
         {!completed ? (
           <TouchableOpacity style={cardStyles.completeBtn} onPress={this.complete}>
-            <Icon name="check-circle-outline" type="material" size={18} color="#008000" />
+          <MaterialIcons name="check-circle-outline" size={18} color="#008000" />
             <Text style={cardStyles.completeBtnText}> Mark as Complete</Text>
           </TouchableOpacity>
         ) : (
           <View>
             <View style={cardStyles.doneRow}>
-              <Icon name="check-circle" type="material" size={18} color="#008000" />
+              <MaterialIcons name="check-circle" size={18} color="#008000" />
               <Text style={{ color: '#008000', marginLeft: 4, fontWeight: '600' }}>Completed! Rate it:</Text>
             </View>
             {!rating ? (
               <View style={cardStyles.ratingRow}>
                 <TouchableOpacity onPress={() => this.setState({ rating: 'like' })} style={cardStyles.ratingBtn}>
-                  <Icon name="thumb-up-outline" type="material-community" size={28} color="#008000" />
+                  <MaterialCommunityIcons name="thumb-up-outline" size={28} color="#008000" />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => this.setState({ rating: 'dislike' })} style={cardStyles.ratingBtn}>
-                  <Icon name="thumb-down-outline" type="material-community" size={28} color="#e53935" />
+                  <MaterialCommunityIcons name="thumb-down-outline" size={28} color="#e53935" />
                 </TouchableOpacity>
               </View>
             ) : (

@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, SafeAreaView,
-  TouchableOpacity, TextInput, Alert,
+  TouchableOpacity, TextInput, Alert, Text, ActivityIndicator,
 } from 'react-native';
-import { Text, Icon, Button } from 'react-native-elements';
 import { auth, db } from '../components/Firebase';
 import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -148,13 +147,13 @@ export class MatchReportScreen extends Component {
                 onChangeText={(t) => this.setState({ gamePlan: t })}
               />
 
-              <Button
-                title="Save Match Report"
-                buttonStyle={styles.saveBtn}
-                containerStyle={{ marginTop: 20 }}
-                loading={loading}
+              <TouchableOpacity
+                style={[styles.saveBtn, { marginTop: 20, paddingVertical: 12, alignItems: 'center' }]}
                 onPress={this.submit}
-              />
+                disabled={loading}
+              >
+                {loading ? <ActivityIndicator size="small" color="white" /> : <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Save Match Report</Text>}
+              </TouchableOpacity>
             </>
           ) : (
             <>

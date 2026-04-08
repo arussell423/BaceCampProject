@@ -2,9 +2,9 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  TextInput, Alert, ScrollView, ActivityIndicator,
+  TextInput, Alert, ScrollView, ActivityIndicator, Text,
 } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getPlayerPushToken, sendPushNotification } from '../../services/notificationService';
@@ -101,7 +101,7 @@ export class CoachSendFeedbackScreen extends Component {
               style={styles.photoBtn}
               onPress={() => Alert.alert('Coming Soon', 'ImagePicker would open here on device')}
             >
-              <Icon name="photo-camera" type="material" color="#008000" size={36} />
+              <MaterialIcons name="photo-camera" size={36} color="#008000" />
               <Text style={styles.photoBtnText}>Tap to attach photo</Text>
             </TouchableOpacity>
           )}

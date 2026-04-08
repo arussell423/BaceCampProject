@@ -2,9 +2,8 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  TextInput, Alert, ScrollView, ActivityIndicator,
+  TextInput, Alert, ScrollView, ActivityIndicator, Text,
 } from 'react-native';
-import { Text, Icon } from 'react-native-elements';
 import { auth, db } from '../../components/Firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getPlayerPushToken, sendPushNotification } from '../../services/notificationService';

@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, TouchableOpacity,
-  SafeAreaView, Alert, TextInput,
+  SafeAreaView, Alert, TextInput, Text,
 } from 'react-native';
-import { Text, Slider, Icon, Button } from 'react-native-elements';
+import { MaterialIcons } from '@expo/vector-icons';
+import Slider from '@react-native-community/slider';
 import { auth, db } from '../components/Firebase';
 import { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from 'firebase/firestore';
 import { getCoachPushToken, sendPushNotification } from '../services/notificationService';
@@ -16,9 +17,8 @@ function StarRating({ value, max, onPress, colour }) {
     <View style={{ flexDirection: 'row', marginBottom: 6 }}>
       {Array.from({ length: max }).map((_, i) => (
         <TouchableOpacity key={i} onPress={() => onPress(i + 1)} style={{ marginRight: 4 }}>
-          <Icon
+          <MaterialIcons
             name={i < value ? 'star' : 'star-outline'}
-            type="material"
             size={26}
             color={i < value ? colour : '#ddd'}
           />
@@ -153,12 +153,12 @@ class PhysicalTab extends Component {
           </View>
         ))}
 
-        <Button
-          title="Save Physical Evaluation"
-          buttonStyle={styles.saveBtn}
-          containerStyle={{ marginTop: 20 }}
+        <TouchableOpacity
+          style={[styles.saveBtn, { marginTop: 20, paddingVertical: 12, alignItems: 'center' }]}
           onPress={() => this.props.onSave({ speed, strength, power, muscleMap })}
-        />
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Save Physical Evaluation</Text>
+        </TouchableOpacity>
       </ScrollView>
     );
   }
@@ -210,9 +210,8 @@ class TacticalTab extends Component {
           style={styles.checkRow}
           onPress={() => this.setState((prev) => ({ preMatchPlanSet: !prev.preMatchPlanSet }))}
         >
-          <Icon
+          <MaterialIcons
             name={preMatchPlanSet ? 'check-box' : 'check-box-outline-blank'}
-            type="material"
             size={24}
             color={preMatchPlanSet ? '#2196F3' : '#aaa'}
           />
@@ -231,12 +230,12 @@ class TacticalTab extends Component {
           onChangeText={(t) => this.setState({ gamePlan: t })}
         />
 
-        <Button
-          title="Save Tactical Evaluation"
-          buttonStyle={[styles.saveBtn, { backgroundColor: '#2196F3' }]}
-          containerStyle={{ marginTop: 12 }}
+        <TouchableOpacity
+          style={[styles.saveBtn, { backgroundColor: '#2196F3', marginTop: 12, paddingVertical: 12, alignItems: 'center' }]}
           onPress={() => this.props.onSave({ unforcedErrors, winners, shotPlacement, shotSelection, gamePlan, preMatchPlanSet })}
-        />
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Save Tactical Evaluation</Text>
+        </TouchableOpacity>
       </ScrollView>
     );
   }
@@ -294,12 +293,12 @@ class MentalTab extends Component {
           </Text>
         </View>
 
-        <Button
-          title="Save Mental Evaluation"
-          buttonStyle={[styles.saveBtn, { backgroundColor: '#9C27B0' }]}
-          containerStyle={{ marginTop: 20 }}
+        <TouchableOpacity
+          style={[styles.saveBtn, { backgroundColor: '#9C27B0', marginTop: 20, paddingVertical: 12, alignItems: 'center' }]}
           onPress={() => this.props.onSave({ attitude, effort, nerves })}
-        />
+        >
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>Save Mental Evaluation</Text>
+        </TouchableOpacity>
       </ScrollView>
     );
   }
