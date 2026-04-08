@@ -75,7 +75,8 @@ export class CoachRosterScreen extends Component {
       Alert.alert('Invite Sent', `Invite sent to ${inviteEmail}`);
       this.loadRoster();
     } catch (e) {
-      Alert.alert('Error', 'Could not send invite.');
+      console.error('sendInvite error:', e?.code, e?.message, e);
+      Alert.alert('Error', `Could not send invite.\n${e?.code || e?.message || 'Unknown error'}`);
     }
   };
 

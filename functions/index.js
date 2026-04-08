@@ -87,12 +87,8 @@ exports.onCoachInvite = functions.firestore
          <p>Hi there,</p>
          <p><strong>${coachName}</strong> has invited you to join their team on <strong>${APP_NAME}</strong> — a professional tennis coaching platform to track your performance, receive personalised training plans, and communicate directly with your coach.</p>
          <p><strong>To get started:</strong></p>
-         <ol>
-           <li>Download the <strong>Expo Go</strong> app to run ${APP_NAME} during testing</li>
-           <li>Create your account using this exact email address: <strong>${playerEmail}</strong></li>
-           <li>Select <strong>Player</strong> as your role</li>
-           <li>You'll automatically be connected to ${coachName}'s roster</li>
-         </ol>
+         <p style="font-weight:700;margin:12px 0 4px;">Step 1 — Install Expo Go</p>
+         <p style="margin:0 0 8px;font-size:14px;color:#555;">bACE CAMP runs through the free Expo Go app during testing (no App Store approval needed).</p>
          <table style="width:100%;margin:20px 0;">
            <tr>
              <td style="padding-right:8px;">
@@ -109,14 +105,31 @@ exports.onCoachInvite = functions.firestore
              </td>
            </tr>
          </table>
-         <p style="text-align:center;margin:16px 0;">
-           <a href="https://expo.dev/@alexis84/bace-camp-project"
+         <p style="font-weight:700;margin:16px 0 4px;">Step 2 — Open the app</p>
+         <p style="margin:0 0 12px;font-size:14px;color:#555;">After installing Expo Go, tap the button below. If it doesn't open automatically, open Expo Go and paste the link manually.</p>
+         <p style="text-align:center;margin:12px 0 6px;">
+           <a href="exp://u.expo.dev/d8d783ce-6cc0-4774-88db-00e82778910a?channel-name=preview"
               style="display:inline-block;background:#1B5E20;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px;">
-             🎾 Open bACE CAMP in Expo Go
+             🎾 Open bACE CAMP
            </a>
          </p>
-         <p style="text-align:center;font-size:13px;color:#888;">Make sure you have <strong>Expo Go</strong> installed before tapping the button above.</p>
-         <p style="background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:12px 16px;font-size:13px;color:#7d6608;">
+         <p style="text-align:center;margin:4px 0 12px;">
+           <a href="https://expo.dev/accounts/alexis84/projects/bace-camp-project"
+              style="font-size:13px;color:#006400;">
+             Or view project page on Expo →
+           </a>
+         </p>
+         <div style="background:#f4f6fa;border-radius:8px;padding:12px 16px;margin:8px 0;font-size:13px;color:#555;">
+           <strong>Manual URL (paste into Expo Go → Enter URL):</strong><br/>
+           <span style="font-family:monospace;word-break:break-all;">exp://u.expo.dev/d8d783ce-6cc0-4774-88db-00e82778910a?channel-name=preview</span>
+         </div>
+         <p style="font-weight:700;margin:16px 0 4px;">Step 3 — Create your account</p>
+         <ol style="margin:0;padding-left:20px;font-size:14px;color:#555;">
+           <li>Sign up using this exact email: <strong>${playerEmail}</strong></li>
+           <li>Select <strong>Player</strong> as your role</li>
+           <li>You'll be automatically connected to ${coachName}'s roster</li>
+         </ol>
+         <p style="background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:12px 16px;font-size:13px;color:#7d6608;margin-top:12px;">
            <strong>Note:</strong> Once ${APP_NAME} is live in the App Store and Google Play, you'll be able to download it directly. Your account and connection to ${coachName} will carry over automatically.
          </p>
          <p style="color:#888;font-size:13px;">If you weren't expecting this invitation, you can safely ignore this email.</p>`
