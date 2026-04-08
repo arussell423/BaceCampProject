@@ -57,8 +57,8 @@ export async function linkPlayerToCoach(user) {
         { merge: true },
       );
 
-      // 4. Mark invite as accepted
-      batch.update(linkDoc.ref, { status: 'accepted' });
+      // 4. Mark invite as accepted and store playerUid for future rule checks
+      batch.update(linkDoc.ref, { status: 'accepted', playerUid: uid });
 
       await batch.commit();
     }

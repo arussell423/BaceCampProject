@@ -22,10 +22,12 @@ service cloud.firestore {
 
     // ── User profiles ──────────────────────────────────────────────────────────
     match /users/{uid} {
-      // Owner can always read/write their own profile
       allow read, write: if isOwner(uid);
-      // Linked coach can read (not write) a player's profile
       allow read: if isLinkedCoach(uid);
+      // Allow a coach to clear coachUid when removing a player from roster
+      allow update: if isCoach() &&
+        get(/databases/$(database)/documents/users/$(uid)).data.get('coachUid','') == request.auth.uid &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['coachUid']);
     }
 
     // ── Player evaluations ─────────────────────────────────────────────────────
@@ -72,13 +74,13 @@ service cloud.firestore {
 
     // ── Coach invite requests ──────────────────────────────────────────────────
     match /linkRequests/{requestId} {
-      // Only coaches can create invites
       allow create: if isCoach();
-      // Only the inviting coach can read their own invites
       allow read: if isAuth() && resource.data.coachUid == request.auth.uid;
-      // The invited player can update status (accept/decline)
-      allow update: if isAuth() && resource.data.playerEmail == request.auth.token.email;
-      // Coach can delete their own invites
+      // Player can accept/decline — match by stored playerUid OR email token (belt+braces)
+      allow update: if isAuth() && (
+        resource.data.get('playerUid','') == request.auth.uid ||
+        resource.data.playerEmail == request.auth.token.email
+      );
       allow delete: if isAuth() && resource.data.coachUid == request.auth.uid;
     }
 

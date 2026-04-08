@@ -2,12 +2,11 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  ScrollView, TextInput, Alert, Modal, ActivityIndicator,
+  ScrollView, TextInput, Alert, Modal, ActivityIndicator, Text,
 } from 'react-native';
-import { Text } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
-import { collection, getDocs, doc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, deleteDoc, writeBatch, serverTimestamp, updateDoc } from 'firebase/firestore';
 
 function evalDotColor(lastEvalDate) {
   if (!lastEvalDate) return '#F44336';
@@ -102,7 +101,6 @@ export class CoachRosterScreen extends Component {
               await batch.commit();
               // Clear coachUid from player's profile if they have a Firebase UID
               if (player.uid) {
-                const { updateDoc } = await import('firebase/firestore');
                 await updateDoc(doc(db, 'users', player.uid), { coachUid: null }).catch(() => {});
               }
               this.loadRoster();
