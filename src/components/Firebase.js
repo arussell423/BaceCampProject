@@ -14,8 +14,21 @@ const firebaseConfig = {
   appId:             extra.firebaseAppId,
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Guard: Firebase throws synchronously if apiKey is missing (e.g. env vars
+// not available in Expo Go EAS Update context). Wrap to prevent blank screen.
+let app, auth, db;
+try {
+  app  = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  auth = getAuth(app);
+  db   = getFirestore(app);
+} catch (e) {
+  console.error('Firebase init failed:', e?.message, '\nConfig:', JSON.stringify(firebaseConfig));
+  // Provide dummy exports so imports don't fail — app will be non-functional
+  // but at least renders visibly so the error can be reported.
+  app  = null;
+  auth = { currentUser: null, onAuthStateChanged: (cb) => { cb(null); return () => {}; } };
+  db   = {};
+}
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+export { auth, db };
 export default app;

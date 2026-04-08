@@ -4,13 +4,19 @@ import { Platform } from 'react-native';
 import { db } from '../components/Firebase';
 import { doc, getDoc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+// Guard: setNotificationHandler runs at module level — wrap so a failure
+// in expo-notifications doesn't crash the entire app before React mounts.
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+} catch (e) {
+  console.warn('Notifications.setNotificationHandler failed:', e?.message);
+}
 
 /** Request permissions and return the Expo push token (or null on simulator/web) */
 export async function registerForPushNotifications() {

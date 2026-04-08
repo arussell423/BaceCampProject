@@ -75,13 +75,15 @@ export class App extends Component {
 
     if (loading) {
       return (
-        <GestureHandlerRootView style={styles.root}>
-          <SafeAreaProvider>
-            <View style={styles.loading}>
-              <ActivityIndicator size="large" color="#008000" />
-            </View>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
+        <ErrorBoundary>
+          <GestureHandlerRootView style={styles.root}>
+            <SafeAreaProvider>
+              <View style={styles.loading}>
+                <ActivityIndicator size="large" color="#008000" />
+              </View>
+            </SafeAreaProvider>
+          </GestureHandlerRootView>
+        </ErrorBoundary>
       );
     }
 
