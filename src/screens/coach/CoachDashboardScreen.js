@@ -108,15 +108,17 @@ export class CoachDashboardScreen extends Component {
         {/* Sort bar */}
         <View style={dbStyles.sortBar}>
           <Text style={dbStyles.sortLabel}>Sort: </Text>
-          {SORT_OPTIONS.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              style={[dbStyles.sortChip, sortBy === opt && dbStyles.sortChipActive]}
-              onPress={() => this.setState({ sortBy: opt })}
-            >
-              <Text style={[dbStyles.sortChipText, sortBy === opt && dbStyles.sortChipTextActive]}>{opt}</Text>
-            </TouchableOpacity>
-          ))}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ flexDirection: 'row' }}>
+            {SORT_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt}
+                style={[dbStyles.sortChip, sortBy === opt && dbStyles.sortChipActive]}
+                onPress={() => this.setState({ sortBy: opt })}
+              >
+                <Text style={[dbStyles.sortChipText, sortBy === opt && dbStyles.sortChipTextActive]}>{opt}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {loading ? (

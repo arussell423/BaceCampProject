@@ -99,7 +99,7 @@ export class ProfileScreen extends Component {
           <ActivityIndicator size="large" color="#008000" style={{ marginTop: 60 }} />
         ) : (
           <>
-            <ScrollView contentContainerStyle={styles.container}>
+            <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
               {/* Avatar + role */}
               <View style={styles.avatarSection}>
                 <View style={{width:60,height:60,borderRadius:30,backgroundColor:'#008000',alignItems:'center',justifyContent:'center'}}><Text style={{color:'#fff',fontWeight:'bold',fontSize:24}}>{initials}</Text></View>

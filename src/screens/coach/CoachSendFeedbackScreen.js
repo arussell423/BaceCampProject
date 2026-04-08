@@ -64,7 +64,7 @@ export class CoachSendFeedbackScreen extends Component {
       <SafeAreaView style={styles.safeArea}>
         <AppHeader navigation={this.props.navigation} title="Send Feedback" homeScreen="CoachHomeScreen" />
 
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <Text style={styles.toLabel}>To: {this.playerEmail}</Text>
 
           {/* Type selector */}

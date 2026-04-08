@@ -1,10 +1,10 @@
 import React, { Component } from 'react'
-import {View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, Image} from 'react-native';
+import {View, StyleSheet, ScrollView, TouchableOpacity, Text, Image} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
     const styles = StyleSheet.create({
         container: {
             backgroundColor: '#ffffff',
-          height: '100%',
+          flexGrow: 1,
           flexDirection: 'column',
           justifyContent: 'center',
         },
@@ -40,9 +40,9 @@ export class IntroScreen extends Component {
 
     render() {
         return (
-            <View>
+            <ScrollView contentContainerStyle={styles.container}>
             
-            <View style={styles.container}>
+            <View>
         <View style={styles.headerContainer}>
             <Ionicons name="md-tennisball-outline" size={50} color="#000" />
             <Text style={{fontSize:18,fontWeight:'bold'}}>Welcome to Bace Camp</Text>
@@ -73,7 +73,7 @@ export class IntroScreen extends Component {
         </View>
                 </View>
                 
-            </View>
+            </ScrollView>
 
             
             

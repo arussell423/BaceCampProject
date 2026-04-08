@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { View, StyleSheet, Dimensions, Image, TouchableOpacity, Text } from "react-native";
+import { View, StyleSheet, Dimensions, Image, TouchableOpacity, Text, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
@@ -26,7 +26,7 @@ export class onBoardScreen extends Component {
     const { page } = this.state;
     const slide = slides[page];
     return (
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {/* Hero logo — large and prominent */}
         <Image
           source={require("../assets/image/bACE_CAMP-logo-transparent.png")}
@@ -64,13 +64,13 @@ export class onBoardScreen extends Component {
         >
           <Text style={styles.coachLinkText}>Already have an account? Sign in →</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: "#F4F6FA", alignItems: "center", justifyContent: "center", padding: 30 },
+  container:   { flexGrow: 1, backgroundColor: "#F4F6FA", alignItems: "center", justifyContent: "center", padding: 30 },
   heroLogo:    { width: width * 0.75, height: 180, marginBottom: 32 },
   featureRow:  { flexDirection: "row", marginBottom: 28 },
   featureChip: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "#ddd", marginHorizontal: 8, backgroundColor: "white" },

@@ -189,7 +189,7 @@ class TacticalTab extends Component {
       { label: `Shot Selection: ${shotSelection}/10`,   key: 'shotSelection',  val: shotSelection },
     ];
     return (
-      <ScrollView contentContainerStyle={styles.tabContent}>
+      <ScrollView contentContainerStyle={styles.tabContent} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionLabel}>Tactical Metrics (slide to rate)</Text>
         {metrics.map((item) => (
           <View key={item.key} style={styles.sliderRow}>

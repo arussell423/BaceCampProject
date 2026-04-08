@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Text, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Text, Image, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../components/Firebase';
 import { doc, setDoc } from 'firebase/firestore';
@@ -34,7 +34,7 @@ export class SelectProfileScreen extends Component {
   render() {
     const { saving } = this.state;
     return (
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <Image
           source={require('../assets/image/bACE_CAMP-logo-transparent.png')}
           style={styles.logo}
@@ -59,14 +59,14 @@ export class SelectProfileScreen extends Component {
             </TouchableOpacity>
           </View>
         )}
-      </View>
+      </ScrollView>
     );
   }
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: '#F4F6FA',
     alignItems: 'center',
     justifyContent: 'center',

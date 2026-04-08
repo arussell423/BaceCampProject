@@ -168,7 +168,7 @@ export class CoachPlayerDetailScreen extends Component {
       propsForDots: { r: '3', strokeWidth: '1' },
     };
     return (
-      <ScrollView contentContainerStyle={styles.tabContent}>
+      <ScrollView contentContainerStyle={[styles.tabContent, { paddingBottom: 100 }]}>
         {!hasData ? (
           <Text style={styles.emptyText}>No evaluation data yet for this player.</Text>
         ) : (
@@ -215,7 +215,7 @@ export class CoachPlayerDetailScreen extends Component {
   renderTraining() {
     const { trainingPlans } = this.state;
     return (
-      <View style={styles.tabContent}>
+      <ScrollView contentContainerStyle={[styles.tabContent, { paddingBottom: 100 }]}>
         {trainingPlans.length === 0 ? (
           <Text style={styles.emptyText}>No coach-assigned training yet.</Text>
         ) : (
@@ -234,15 +234,15 @@ export class CoachPlayerDetailScreen extends Component {
             </View>
           ))
         )}
-      </View>
+      </ScrollView>
     );
   }
 
   renderChat() {
     const { chatMessages, chatInput } = this.state;
     return (
-      <View style={[styles.tabContent, { flex: 1 }]}>
-        <ScrollView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
           {chatMessages.length === 0 ? (
             <Text style={styles.emptyText}>No messages yet from this player.</Text>
           ) : (
@@ -286,7 +286,7 @@ export class CoachPlayerDetailScreen extends Component {
 
   renderHistory() {    const { evaluations } = this.state;
     return (
-      <View style={styles.tabContent}>
+      <ScrollView contentContainerStyle={[styles.tabContent, { paddingBottom: 100 }]}>
         {evaluations.length === 0 ? (
           <Text style={styles.emptyText}>No evaluation history yet.</Text>
         ) : (
@@ -299,7 +299,7 @@ export class CoachPlayerDetailScreen extends Component {
             </View>
           ))
         )}
-      </View>
+      </ScrollView>
     );
   }
 
@@ -327,12 +327,12 @@ export class CoachPlayerDetailScreen extends Component {
         {loading ? (
           <ActivityIndicator size="large" color="#008000" style={{ marginTop: 60 }} />
         ) : (
-          <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+          <View style={{ flex: 1 }}>
             {activeTab === 0 && this.renderPerformance()}
             {activeTab === 1 && this.renderTraining()}
             {activeTab === 2 && this.renderChat()}
             {activeTab === 3 && this.renderHistory()}
-          </ScrollView>
+          </View>
         )}
 
         {/* Floating action row */}
