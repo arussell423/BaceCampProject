@@ -287,3 +287,138 @@ describe('sendInvite batch integrity (coach side)', () => {
     expect(roster.path).toContain('player_name@test_com');
   });
 });
+
+// ── New: roster join-code flow ─────────────────────────────────────────────────
+
+describe('generateCode (roster join code)', () => {
+  // Replicate the logic from CoachRosterScreen
+  function generateCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  }
+
+  test('generates a 6-character string', () => {
+    for (let i = 0; i < 20; i++) {
+      expect(generateCode()).toHaveLength(6);
+    }
+  });
+
+  test('only uses allowed characters (no 0, O, 1, I)', () => {
+    const forbidden = /[01OI]/;
+    for (let i = 0; i < 100; i++) {
+      expect(generateCode()).not.toMatch(forbidden);
+    }
+  });
+
+  test('generates uppercase only', () => {
+    for (let i = 0; i < 20; i++) {
+      const code = generateCode();
+      expect(code).toBe(code.toUpperCase());
+    }
+  });
+
+  test('two successive calls are unlikely to collide', () => {
+    const seen = new Set();
+    for (let i = 0; i < 1000; i++) seen.add(generateCode());
+    // With 32^6 ≈ 1B possibilities, 1000 codes should all be unique
+    expect(seen.size).toBe(1000);
+  });
+});
+
+describe('joinCoach batch (player-initiated join via roster code)', () => {
+  function buildJoinBatch(user, coachUid, coachName) {
+    const sanitized = sanitizeEmail(user.email);
+    const writes = [];
+    // Write 1: create roster entry as active player
+    writes.push({
+      collection: 'playerRosters',
+      path: `${coachUid}/players/${sanitized}`,
+      data: { uid: user.uid, name: user.displayName || user.email, email: user.email, invited: false },
+    });
+    // Write 2: store coachUid + coachName on player profile
+    writes.push({
+      collection: 'users',
+      path: user.uid,
+      data: { coachUid, coachName: coachName || '' },
+    });
+    // Write 3: linkRequest audit record (playerInitiated: true)
+    writes.push({
+      collection: 'linkRequests',
+      path: `${user.uid}-${coachUid}`,
+      data: { coachUid, playerEmail: user.email, playerUid: user.uid, status: 'accepted', playerInitiated: true },
+    });
+    return writes;
+  }
+
+  test('batch writes exactly 3 documents', () => {
+    const user = { uid: 'p-uid', email: 'player@test.com', displayName: 'Test Player' };
+    expect(buildJoinBatch(user, 'c-uid', 'Coach Name')).toHaveLength(3);
+  });
+
+  test('roster entry is active (invited=false)', () => {
+    const user = { uid: 'p-uid', email: 'player@test.com' };
+    const writes = buildJoinBatch(user, 'c-uid', 'Coach');
+    const roster = writes.find(w => w.collection === 'playerRosters');
+    expect(roster.data.invited).toBe(false);
+  });
+
+  test('player profile stores coachUid and coachName', () => {
+    const user = { uid: 'p-uid', email: 'player@test.com' };
+    const writes = buildJoinBatch(user, 'coach-123', 'Coach Alex');
+    const userWrite = writes.find(w => w.collection === 'users');
+    expect(userWrite.data.coachUid).toBe('coach-123');
+    expect(userWrite.data.coachName).toBe('Coach Alex');
+  });
+
+  test('linkRequest marked playerInitiated', () => {
+    const user = { uid: 'p-uid', email: 'player@test.com' };
+    const writes = buildJoinBatch(user, 'c-uid', 'Coach');
+    const lr = writes.find(w => w.collection === 'linkRequests');
+    expect(lr.data.playerInitiated).toBe(true);
+    expect(lr.data.status).toBe('accepted');
+  });
+
+  test('does NOT write to playerCoach (no isCoach permission)', () => {
+    const user = { uid: 'p-uid', email: 'player@test.com' };
+    const writes = buildJoinBatch(user, 'c-uid', 'Coach');
+    const pcWrites = writes.filter(w => w.collection === 'playerCoach');
+    expect(pcWrites).toHaveLength(0);
+  });
+
+  test('roster path uses sanitized email', () => {
+    const user = { uid: 'p-uid', email: 'player.name@test.com' };
+    const writes = buildJoinBatch(user, 'c-uid', 'Coach');
+    const roster = writes.find(w => w.collection === 'playerRosters');
+    expect(roster.path).toContain('player_name@test_com');
+  });
+});
+
+describe('joinCoach validation', () => {
+  function validateJoinCode(input) {
+    const code = (input || '').trim().toUpperCase();
+    if (code.length < 4) return { valid: false, reason: 'Code too short' };
+    if (code.length > 8) return { valid: false, reason: 'Code too long' };
+    return { valid: true, code };
+  }
+
+  test('valid 6-char code passes', () => {
+    expect(validateJoinCode('AB3X9Z').valid).toBe(true);
+  });
+
+  test('empty input fails', () => {
+    expect(validateJoinCode('').valid).toBe(false);
+  });
+
+  test('3-char code too short', () => {
+    expect(validateJoinCode('ABC').valid).toBe(false);
+  });
+
+  test('normalises to uppercase', () => {
+    const result = validateJoinCode('ab3x9z');
+    expect(result.code).toBe('AB3X9Z');
+  });
+
+  test('strips whitespace before checking', () => {
+    expect(validateJoinCode('  AB3X9Z  ').valid).toBe(true);
+  });
+});

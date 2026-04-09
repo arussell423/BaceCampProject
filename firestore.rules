@@ -70,7 +70,10 @@ service cloud.firestore {
     match /playerRosters/{coachUid}/players/{playerId} {
       // Coach manages their full roster
       allow read, write: if isOwner(coachUid);
-      // Player can update ONLY their own entry when accepting an invite (sets uid, name, invited, linkedAt)
+      // Player can CREATE their own entry when joining via roster code (email must match)
+      allow create: if isAuth() &&
+        request.resource.data.email == request.auth.token.email;
+      // Player can UPDATE ONLY their own entry when accepting an email invite
       allow update: if isAuth() &&
         resource.data.email == request.auth.token.email &&
         request.resource.data.diff(resource.data).affectedKeys()
@@ -85,9 +88,21 @@ service cloud.firestore {
       allow write: if isCoach();
     }
 
+    // ── Coach roster join codes (player self-service join) ─────────────────────
+    // rosterCodes/{code} → { coachUid, coachName }
+    match /rosterCodes/{code} {
+      // Any auth user can read to validate a code they're entering
+      allow read: if isAuth();
+      // Coach creates their own code
+      allow create: if isCoach();
+      // Coach can update/delete only their own code
+      allow update, delete: if isCoach() && resource.data.coachUid == request.auth.uid;
+    }
+
     // ── Coach invite requests ──────────────────────────────────────────────────
     match /linkRequests/{requestId} {
-      allow create: if isCoach();
+      // Coach-initiated invites; also allow player-initiated joins (playerInitiated:true)
+      allow create: if isAuth() && (isCoach() || request.resource.data.get('playerInitiated', false) == true);
       // Coach reads their own requests; player reads invites addressed to them
       allow read: if isAuth() && (
         resource.data.coachUid == request.auth.uid ||

@@ -6,7 +6,7 @@ import {
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppHeader } from '../components/AppHeader';
 import { auth, db } from '../components/Firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, writeBatch, collection, serverTimestamp } from 'firebase/firestore';
 import { sendPasswordResetEmail, signOut, updateProfile, verifyBeforeUpdateEmail } from 'firebase/auth';
 import { triggerRoleChange } from '../components/roleManager';
 
@@ -19,6 +19,10 @@ export class ProfileScreen extends Component {
     saving: false,
     switching: false,
     loading: true,
+    // Join-a-coach flow
+    joinCode: '',
+    joiningCoach: false,
+    linkedCoachName: null,
   };
 
   componentDidMount() {
@@ -33,6 +37,7 @@ export class ProfileScreen extends Component {
             displayName: data.displayName || user.displayName || '',
             role: data.role || 'player',
             isAdmin: data.isAdmin === true,
+            linkedCoachName: data.coachUid ? (data.coachName || 'A coach') : null,
             loading: false,
           });
         } else {
@@ -119,12 +124,80 @@ export class ProfileScreen extends Component {
     );
   };
 
+  joinCoach = async () => {
+    const { joinCode } = this.state;
+    const code = joinCode.trim().toUpperCase();
+    if (code.length < 4) {
+      Alert.alert('Invalid Code', 'Please enter the 6-character code from your coach.');
+      return;
+    }
+    const user = auth.currentUser;
+    if (!user) return;
+    this.setState({ joiningCoach: true });
+    try {
+      // Look up the roster code
+      const codeSnap = await getDoc(doc(db, 'rosterCodes', code));
+      if (!codeSnap.exists()) {
+        Alert.alert('Code Not Found', 'That code doesn\'t match any coach. Check with your coach and try again.');
+        this.setState({ joiningCoach: false });
+        return;
+      }
+      const { coachUid, coachName } = codeSnap.data();
+      if (!coachUid) {
+        Alert.alert('Invalid Code', 'This code is no longer valid.');
+        this.setState({ joiningCoach: false });
+        return;
+      }
+      // Check if already linked to this coach
+      const existingSnap = await getDoc(doc(db, 'users', user.uid));
+      if (existingSnap.exists() && existingSnap.data().coachUid === coachUid) {
+        Alert.alert('Already Linked', `You're already on ${coachName || 'this coach'}\'s roster!`);
+        this.setState({ joiningCoach: false });
+        return;
+      }
+      const sanitizedEmail = user.email.replace(/[.#$[\]]/g, '_');
+      const displayName = user.displayName || user.email;
+      // Run the same linking batch as linkingService.js
+      const batch = writeBatch(db);
+      // 1. Add to coach roster as active player
+      batch.set(
+        doc(db, 'playerRosters', coachUid, 'players', sanitizedEmail),
+        { uid: user.uid, name: displayName, email: user.email, invited: false, linkedAt: serverTimestamp() },
+        { merge: true },
+      );
+      // 2. Store coachUid on player's profile
+      batch.set(
+        doc(db, 'users', user.uid),
+        { coachUid, coachName: coachName || '' },
+        { merge: true },
+      );
+      // 3. Create a linkRequest record for audit trail
+      batch.set(
+        doc(collection(db, 'linkRequests'), `${user.uid}-${coachUid}`),
+        {
+          coachUid,
+          playerEmail: user.email,
+          playerUid: user.uid,
+          status: 'accepted',
+          playerInitiated: true,
+          linkedAt: serverTimestamp(),
+        },
+      );
+      await batch.commit();
+      this.setState({ joiningCoach: false, joinCode: '', linkedCoachName: coachName || 'Your coach' });
+      Alert.alert('✅ Joined!', `You've been added to ${coachName || 'your coach'}\'s roster. They can now see your progress and assign training.`);
+    } catch (e) {
+      Alert.alert('Error', 'Could not join. Please check your connection and try again.');
+      this.setState({ joiningCoach: false });
+    }
+  };
+
   logout = () => {
     signOut(auth).catch(() => {});
   };
 
   render() {
-    const { displayName, email, role, isAdmin, saving, switching, loading } = this.state;
+    const { displayName, email, role, isAdmin, saving, switching, loading, joinCode, joiningCoach, linkedCoachName } = this.state;
     const initials = (displayName || email || '?')[0].toUpperCase();
     const isCoach = role === 'coach';
     const canSwitchRole = isCoach || isAdmin;
@@ -208,6 +281,43 @@ export class ProfileScreen extends Component {
                 </TouchableOpacity>
               )}
 
+              {/* Join a Coach — players only */}
+              {!isCoach && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    <MaterialIcons name="people" size={16} color="#008000" />{'  '}Join a Coach
+                  </Text>
+                  {linkedCoachName ? (
+                    <View style={styles.linkedCoachBanner}>
+                      <MaterialIcons name="check-circle" size={18} color="#4CAF50" />
+                      <Text style={styles.linkedCoachText}>{'  '}Linked to {linkedCoachName}</Text>
+                    </View>
+                  ) : null}
+                  <Text style={styles.joinHint}>
+                    Enter the 6-character code from your coach to join their roster instantly.
+                  </Text>
+                  <TextInput
+                    style={styles.codeInput}
+                    value={joinCode}
+                    onChangeText={(t) => this.setState({ joinCode: t.toUpperCase() })}
+                    placeholder="e.g. AB3X9Z"
+                    placeholderTextColor="#aaa"
+                    autoCapitalize="characters"
+                    maxLength={6}
+                    autoCorrect={false}
+                  />
+                  <TouchableOpacity
+                    style={[styles.btn, styles.btnGreen, joiningCoach && styles.btnDisabled]}
+                    onPress={this.joinCoach}
+                    disabled={joiningCoach}
+                  >
+                    {joiningCoach
+                      ? <ActivityIndicator size="small" color="white" />
+                      : <Text style={styles.btnText}>Join Coach's Roster</Text>}
+                  </TouchableOpacity>
+                </View>
+              )}
+
               {/* Linked Apps */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Linked Apps</Text>
@@ -277,6 +387,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   logoutText: { color: '#D32F2F', fontWeight: 'bold', fontSize: 15 },
+  // Join a coach
+  joinHint: { fontSize: 12, color: '#888', marginBottom: 10, lineHeight: 18 },
+  codeInput: {
+    borderWidth: 2, borderColor: '#008000', borderRadius: 12, padding: 14,
+    fontSize: 22, fontWeight: '800', color: '#1B5E20', textAlign: 'center',
+    letterSpacing: 6, marginBottom: 12, backgroundColor: '#F1F8E9',
+  },
+  linkedCoachBanner: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F5E9',
+    borderRadius: 8, padding: 10, marginBottom: 10,
+  },
+  linkedCoachText: { fontSize: 13, color: '#2E7D32', fontWeight: '600' },
 });
 
 export default ProfileScreen;

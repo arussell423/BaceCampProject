@@ -3,14 +3,20 @@ import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, TextInput, Alert, Modal, ActivityIndicator,
-  RefreshControl, Text,
+  RefreshControl, Text, Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
 import {
-  collection, doc, deleteDoc, writeBatch, serverTimestamp,
+  collection, doc, deleteDoc, getDoc, setDoc, writeBatch, serverTimestamp,
   updateDoc, onSnapshot,
 } from 'firebase/firestore';
+
+/** Generate a random human-friendly 6-char uppercase code */
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I confusion
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
 
 function evalDotColor(lastEvalDate) {
   if (!lastEvalDate) return '#F44336';
@@ -34,10 +40,13 @@ export class CoachRosterScreen extends Component {
     showInviteModal: false,
     loading: true,
     refreshing: false,
+    rosterCode: null,
+    loadingCode: true,
   };
 
   componentDidMount() {
     this.subscribeRoster();
+    this.loadOrCreateRosterCode();
   }
 
   componentWillUnmount() {
@@ -65,6 +74,50 @@ export class CoachRosterScreen extends Component {
     this.setState({ refreshing: true }, () => {
       setTimeout(() => this.setState({ refreshing: false }), 800);
     });
+  };
+
+  loadOrCreateRosterCode = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const userSnap = await getDoc(doc(db, 'users', user.uid));
+      let code = userSnap.exists() ? userSnap.data().rosterCode : null;
+      if (!code) {
+        // Generate a unique code and store it
+        code = generateCode();
+        // Ensure uniqueness — retry if collision
+        let exists = true;
+        while (exists) {
+          const codeSnap = await getDoc(doc(db, 'rosterCodes', code));
+          if (!codeSnap.exists()) { exists = false; }
+          else { code = generateCode(); }
+        }
+        const coachName = userSnap.exists() ? (userSnap.data().displayName || user.email) : user.email;
+        await Promise.all([
+          setDoc(doc(db, 'users', user.uid), { rosterCode: code }, { merge: true }),
+          setDoc(doc(db, 'rosterCodes', code), { coachUid: user.uid, coachName }),
+        ]);
+      }
+      this.setState({ rosterCode: code, loadingCode: false });
+    } catch (e) {
+      this.setState({ loadingCode: false });
+    }
+  };
+
+  copyCode = () => {
+    const { rosterCode } = this.state;
+    if (!rosterCode) return;
+    // Universal copy: works on web AND React Native
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(rosterCode).catch(() => {});
+      } else if (Platform.OS !== 'web') {
+        // RN native fallback — dynamic require to avoid web bundler issues
+        const { Clipboard } = require('react-native');
+        if (Clipboard?.setString) Clipboard.setString(rosterCode);
+      }
+    } catch (e) { /* clipboard not available — just show the code in the alert */ }
+    Alert.alert('📋 Player Join Code', `Code: ${rosterCode}\n\nShare this with your players. They enter it in Profile → "Join a Coach" to join your roster instantly.`);
   };
 
   sendInvite = async () => {
@@ -163,7 +216,7 @@ export class CoachRosterScreen extends Component {
   };
 
   render() {
-    const { players, pendingInvites, inviteEmail, showInviteModal, loading, refreshing } = this.state;
+    const { players, pendingInvites, inviteEmail, showInviteModal, loading, refreshing, rosterCode, loadingCode } = this.state;
 
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -178,6 +231,26 @@ export class CoachRosterScreen extends Component {
               <RefreshControl refreshing={refreshing} onRefresh={this.onRefresh} />
             }
           >
+            {/* ── Roster Join Code ─────────────────────────── */}
+            <View style={styles.codeCard}>
+              <View style={styles.codeCardTop}>
+                <MaterialIcons name="qr-code" size={20} color="#008000" />
+                <Text style={styles.codeCardTitle}>  Player Join Code</Text>
+              </View>
+              <Text style={styles.codeCardSub}>
+                Share this code with existing players. They enter it in their Profile → "Join a Coach" to link instantly.
+              </Text>
+              {loadingCode ? (
+                <ActivityIndicator size="small" color="#008000" style={{ marginVertical: 8 }} />
+              ) : (
+                <TouchableOpacity style={styles.codeRow} onPress={this.copyCode} activeOpacity={0.7}>
+                  <Text style={styles.codeText}>{rosterCode || '------'}</Text>
+                  <MaterialIcons name="content-copy" size={18} color="#008000" />
+                </TouchableOpacity>
+              )}
+              <Text style={styles.codeTapHint}>Tap code to copy</Text>
+            </View>
+
             {/* ── Active Players ───────────────────────────── */}
             <Text style={styles.sectionHeader}>
               Active Players ({players.length})
@@ -293,6 +366,22 @@ export class CoachRosterScreen extends Component {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F4F6FA' },
   container: { padding: 16, paddingBottom: 100 },
+  // ── Roster code card
+  codeCard: {
+    backgroundColor: '#E8F5E9', borderRadius: 16, padding: 16, marginBottom: 20,
+    borderWidth: 1, borderColor: '#C8E6C9',
+  },
+  codeCardTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+  codeCardTitle: { fontSize: 14, fontWeight: '700', color: '#1B5E20' },
+  codeCardSub: { fontSize: 12, color: '#388E3C', lineHeight: 18, marginBottom: 12 },
+  codeRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: 'white', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 12,
+    borderWidth: 1, borderColor: '#A5D6A7',
+  },
+  codeText: { fontSize: 22, fontWeight: '800', color: '#1B5E20', letterSpacing: 4 },
+  codeTapHint: { fontSize: 10, color: '#81C784', marginTop: 6, textAlign: 'center' },
+  // ── Sections
   sectionHeader: { fontSize: 13, fontWeight: '700', color: '#555', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
   emptyBox: { alignItems: 'center', marginTop: 48, marginBottom: 24 },
   emptyText: { color: '#aaa', fontSize: 16, fontWeight: '600', marginTop: 10 },
