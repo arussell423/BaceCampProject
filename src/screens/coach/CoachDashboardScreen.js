@@ -38,7 +38,7 @@ export class CoachDashboardScreen extends Component {
     try {
       const snap = await getDocs(collection(db, 'playerRosters', user.uid, 'players'));
 
-      const players = await Promise.all(snap.docs.map(async (playerDoc) => {
+      const players = await Promise.all(snap.docs.filter(d => !d.data().invited).map(async (playerDoc) => {
         const p = { id: playerDoc.id, ...playerDoc.data() };
         // Use Firebase UID if the player has linked; fall back to doc ID (sanitized email)
         const lookupId = p.uid || playerDoc.id;
@@ -97,13 +97,7 @@ export class CoachDashboardScreen extends Component {
 
     return (
       <SafeAreaView style={dbStyles.safeArea}>
-        <View style={dbStyles.headerBar}>
-          <TouchableOpacity onPress={() => this.props.navigation.goBack()}>
-            <MaterialIcons name="arrow-back" size={24} color="#008000" />
-          </TouchableOpacity>
-          <Text style={dbStyles.headerTitle}>Team Dashboard</Text>
-          <View style={{ width: 24 }} />
-        </View>
+        <AppHeader navigation={this.props.navigation} title="Team Dashboard" homeScreen="CoachHomeScreen" />
 
         {/* Sort bar */}
         <View style={dbStyles.sortBar}>

@@ -2,19 +2,18 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  TextInput, ScrollView, Alert, ActivityIndicator, Text,
+  TextInput, ScrollView, Alert, ActivityIndicator, Text, Platform,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
-import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 
 export class CoachCalendarScreen extends Component {
   state = {
     players: [],
-    selectedPlayerUid: null,
-    selectedPlayerEmail: '',
+    selectedPlayer: null,
     events: [],
     selectedDate: '',
-    showAddModal: false,
     newEventTitle: '',
     newEventType: 'Training',
     loading: true,
@@ -25,12 +24,19 @@ export class CoachCalendarScreen extends Component {
     this.loadPlayers();
   }
 
+  componentWillUnmount() {
+    if (this._eventsUnsub) this._eventsUnsub();
+  }
+
   loadPlayers = async () => {
     const user = auth.currentUser;
     if (!user) return;
     try {
       const snap = await getDocs(collection(db, 'playerRosters', user.uid, 'players'));
-      const players = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      // Only show active (linked) players — exclude pending invites
+      const players = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((p) => !p.invited && p.uid);
       this.setState({ players, loading: false });
     } catch (e) {
       this.setState({ loading: false });
@@ -38,108 +44,115 @@ export class CoachCalendarScreen extends Component {
   };
 
   selectPlayer = (player) => {
-    this.setState({
-      selectedPlayerUid: player.id,
-      selectedPlayerEmail: player.email,
-      events: [],
-    }, () => this.loadEvents(player.id));
-  };
-
-  loadEvents = async (playerUid) => {
-    try {
-      const snap = await getDocs(query(collection(db, 'schedules', playerUid, 'events'), orderBy('date', 'desc'), limit(20)));
-      const events = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      this.setState({ events });
-    } catch (e) {
-      // silently fail
-    }
+    if (this._eventsUnsub) this._eventsUnsub();
+    // Use the player's Firebase UID (not the sanitizedEmail doc ID)
+    const uid = player.uid || player.id;
+    this.setState({ selectedPlayer: player, events: [] });
+    this._eventsUnsub = onSnapshot(
+      query(collection(db, 'schedules', uid, 'events'), orderBy('date', 'asc'), limit(30)),
+      (snap) => {
+        const events = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        this.setState({ events });
+      },
+      () => {} // silently ignore permission errors
+    );
   };
 
   addEvent = async () => {
-    const { selectedPlayerUid, selectedDate, newEventTitle, newEventType } = this.state;
-    if (!selectedPlayerUid) {
+    const { selectedPlayer, selectedDate, newEventTitle, newEventType } = this.state;
+    if (!selectedPlayer) {
       Alert.alert('Select Player', 'Please select a player first.');
       return;
     }
     if (!selectedDate.trim()) {
-      Alert.alert('Select Date', 'Please enter a date.');
+      Alert.alert('Select Date', 'Please enter a date (YYYY-MM-DD).');
+      return;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate.trim())) {
+      Alert.alert('Invalid Date', 'Please use YYYY-MM-DD format (e.g. 2024-06-15).');
       return;
     }
     if (!newEventTitle.trim()) {
       Alert.alert('Event Title', 'Please enter an event title.');
       return;
     }
+    const uid = selectedPlayer.uid || selectedPlayer.id;
     this.setState({ addingEvent: true });
     try {
-      await addDoc(collection(db, 'schedules', selectedPlayerUid, 'events'), {
+      await addDoc(collection(db, 'schedules', uid, 'events'), {
         date: selectedDate.trim(),
         title: newEventTitle.trim(),
         type: newEventType,
+        addedByCoach: true,
         timestamp: serverTimestamp(),
       });
-      this.setState({ newEventTitle: '', addingEvent: false });
-      Alert.alert('Added', 'Event added to player schedule.');
-      this.loadEvents(selectedPlayerUid);
+      this.setState({ newEventTitle: '', selectedDate: '', addingEvent: false });
+      Alert.alert('✅ Added', 'Event added to player schedule.');
     } catch (e) {
-      Alert.alert('Error', 'Could not add event.');
+      Alert.alert('Error', 'Could not add event. Check your connection.');
       this.setState({ addingEvent: false });
     }
   };
 
   render() {
     const {
-      players, selectedPlayerUid, selectedPlayerEmail,
-      events, selectedDate, newEventTitle, newEventType,
-      loading, addingEvent,
+      players, selectedPlayer, events, selectedDate, newEventTitle,
+      newEventType, loading, addingEvent,
     } = this.state;
 
     const EVENT_TYPES = ['Training', 'Match', 'Rest', 'Assessment'];
+    const today = new Date().toISOString().split('T')[0];
 
     return (
       <SafeAreaView style={styles.safeArea}>
-        <AppHeader navigation={this.props.navigation} title="Calendar" homeScreen="CoachHomeScreen" />
+        <AppHeader navigation={this.props.navigation} title="Schedule" homeScreen="CoachHomeScreen" />
 
         {loading ? (
           <ActivityIndicator size="large" color="#008000" style={{ marginTop: 60 }} />
         ) : (
-          <ScrollView contentContainerStyle={styles.container}>
+          <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+
             {/* Player picker */}
             <Text style={styles.sectionLabel}>Select Player</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.playerBar}>
-              {players.length === 0 ? (
-                <Text style={styles.emptyText}>No players on roster.</Text>
-              ) : (
-                players.map((p) => (
+            {players.length === 0 ? (
+              <View style={styles.emptyBox}>
+                <MaterialIcons name="people-outline" size={36} color="#ccc" />
+                <Text style={styles.emptyText}>No active players on roster yet.</Text>
+              </View>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.playerBar}>
+                {players.map((p) => (
                   <TouchableOpacity
                     key={p.id}
-                    style={[styles.playerChip, selectedPlayerUid === p.id && styles.playerChipActive]}
+                    style={[styles.playerChip, selectedPlayer?.id === p.id && styles.playerChipActive]}
                     onPress={() => this.selectPlayer(p)}
                   >
-                    <Text style={[styles.playerChipText, selectedPlayerUid === p.id && styles.playerChipTextActive]}>
+                    <Text style={[styles.playerChipText, selectedPlayer?.id === p.id && styles.playerChipTextActive]}>
                       {p.name || p.email}
                     </Text>
                   </TouchableOpacity>
-                ))
-              )}
-            </ScrollView>
+                ))}
+              </ScrollView>
+            )}
 
-            {selectedPlayerUid && (
+            {selectedPlayer && (
               <>
                 <Text style={styles.selectedLabel}>
-                  Scheduling for: <Text style={{ color: '#008000' }}>{selectedPlayerEmail}</Text>
+                  Scheduling for: <Text style={{ color: '#008000', fontWeight: '700' }}>{selectedPlayer.name || selectedPlayer.email}</Text>
                 </Text>
 
                 {/* Add event form */}
                 <View style={styles.addCard}>
                   <Text style={styles.addCardTitle}>Add Event</Text>
 
-                  <Text style={styles.fieldLabel}>Date (YYYY-MM-DD)</Text>
+                  <Text style={styles.fieldLabel}>Date</Text>
                   <TextInput
                     style={styles.input}
-                    placeholder="2024-01-15"
+                    placeholder={`YYYY-MM-DD  (today: ${today})`}
                     placeholderTextColor="#aaa"
                     value={selectedDate}
                     onChangeText={(t) => this.setState({ selectedDate: t })}
+                    keyboardType="numbers-and-punctuation"
                   />
 
                   <Text style={styles.fieldLabel}>Event Title</Text>
@@ -151,7 +164,7 @@ export class CoachCalendarScreen extends Component {
                     onChangeText={(t) => this.setState({ newEventTitle: t })}
                   />
 
-                  <Text style={styles.fieldLabel}>Event Type</Text>
+                  <Text style={styles.fieldLabel}>Type</Text>
                   <View style={styles.typeRow}>
                     {EVENT_TYPES.map((type) => (
                       <TouchableOpacity
@@ -178,21 +191,23 @@ export class CoachCalendarScreen extends Component {
                 </View>
 
                 {/* Events list */}
-                {events.length > 0 && (
-                  <View style={styles.eventsList}>
-                    <Text style={styles.sectionLabel}>Upcoming Events</Text>
-                    {events.map((ev) => (
-                      <View key={ev.id} style={styles.eventItem}>
-                        <View style={styles.eventDateBadge}>
-                          <Text style={styles.eventDate}>{ev.date}</Text>
-                        </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.eventTitle}>{ev.title}</Text>
-                          <Text style={styles.eventType}>{ev.type}</Text>
-                        </View>
+                <Text style={styles.sectionLabel}>
+                  Upcoming Events ({events.length})
+                </Text>
+                {events.length === 0 ? (
+                  <Text style={styles.noEvents}>No events scheduled yet.</Text>
+                ) : (
+                  events.map((ev) => (
+                    <View key={ev.id} style={[styles.eventItem, ev.addedByCoach && styles.eventItemCoach]}>
+                      <View style={styles.eventDateBadge}>
+                        <Text style={styles.eventDate}>{ev.date}</Text>
                       </View>
-                    ))}
-                  </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.eventTitle}>{ev.title}</Text>
+                        <Text style={styles.eventType}>{ev.type}{ev.addedByCoach ? '  ·  Coach' : ''}</Text>
+                      </View>
+                    </View>
+                  ))
                 )}
               </>
             )}
@@ -205,13 +220,8 @@ export class CoachCalendarScreen extends Component {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F4F6FA' },
-  headerBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, backgroundColor: 'white', elevation: 2,
-  },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#222' },
   container: { padding: 16, paddingBottom: 40 },
-  sectionLabel: { fontSize: 12, fontWeight: '600', color: '#888', marginBottom: 10, textTransform: 'uppercase' },
+  sectionLabel: { fontSize: 12, fontWeight: '700', color: '#555', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
   playerBar: { marginBottom: 16 },
   playerChip: {
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20,
@@ -220,11 +230,11 @@ const styles = StyleSheet.create({
   playerChipActive: { backgroundColor: '#008000', borderColor: '#008000' },
   playerChipText: { fontSize: 13, color: '#555' },
   playerChipTextActive: { color: 'white', fontWeight: 'bold' },
-  emptyText: { color: '#aaa', fontSize: 14 },
+  emptyBox: { alignItems: 'center', paddingVertical: 24 },
+  emptyText: { color: '#aaa', fontSize: 14, marginTop: 8 },
+  noEvents: { color: '#aaa', fontSize: 13, textAlign: 'center', marginVertical: 16 },
   selectedLabel: { fontSize: 14, color: '#555', marginBottom: 16 },
-  addCard: {
-    backgroundColor: 'white', borderRadius: 14, padding: 16, elevation: 1, marginBottom: 16,
-  },
+  addCard: { backgroundColor: 'white', borderRadius: 14, padding: 16, elevation: 1, marginBottom: 20 },
   addCardTitle: { fontSize: 16, fontWeight: 'bold', color: '#222', marginBottom: 14 },
   fieldLabel: { fontSize: 11, fontWeight: '600', color: '#aaa', marginBottom: 6, textTransform: 'uppercase' },
   input: {
@@ -239,22 +249,19 @@ const styles = StyleSheet.create({
   typeChipActive: { backgroundColor: '#008000', borderColor: '#008000' },
   typeChipText: { fontSize: 12, color: '#555' },
   typeChipTextActive: { color: 'white', fontWeight: 'bold' },
-  addBtn: {
-    backgroundColor: '#008000', borderRadius: 10, paddingVertical: 12, alignItems: 'center',
-  },
+  addBtn: { backgroundColor: '#008000', borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
   addBtnDisabled: { backgroundColor: '#ccc' },
   addBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
-  eventsList: { marginTop: 8 },
   eventItem: {
     backgroundColor: 'white', borderRadius: 12, padding: 14, marginBottom: 10,
     flexDirection: 'row', alignItems: 'center', elevation: 1,
   },
-  eventDateBadge: {
-    backgroundColor: '#e8f5e9', borderRadius: 8, padding: 8, marginRight: 12,
-  },
+  eventItemCoach: { borderLeftWidth: 3, borderLeftColor: '#008000' },
+  eventDateBadge: { backgroundColor: '#e8f5e9', borderRadius: 8, padding: 8, marginRight: 12 },
   eventDate: { fontSize: 12, color: '#008000', fontWeight: '600' },
   eventTitle: { fontSize: 14, fontWeight: '600', color: '#222' },
   eventType: { fontSize: 12, color: '#aaa', marginTop: 2 },
 });
 
 export default CoachCalendarScreen;
+

@@ -335,8 +335,8 @@ export class CoachPlayerDetailScreen extends Component {
           </View>
         )}
 
-        {/* Floating action row */}
-        <View style={styles.actionRow}>
+        {/* Floating action row — hidden on Chat tab to avoid overlap */}
+        {activeTab !== 2 && <View style={styles.actionRow}>
           <TouchableOpacity
             style={[styles.actionBtn, { backgroundColor: '#FF9800' }]}
             onPress={() => this.props.navigation.navigate('CoachSendFeedbackScreen', {
@@ -357,7 +357,7 @@ export class CoachPlayerDetailScreen extends Component {
             <MaterialIcons name="fitness-center" color="white" size={18} />
             <Text style={styles.actionBtnText}>Add Training</Text>
           </TouchableOpacity>
-        </View>
+        </View>}
       </SafeAreaView>
     );
   }

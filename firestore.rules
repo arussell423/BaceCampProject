@@ -103,7 +103,7 @@ service cloud.firestore {
 
     // ── Player personal data ───────────────────────────────────────────────────
     match /schedules/{uid}/events/{eventId} {
-      allow read, write: if isOwner(uid);
+      allow read, write: if isOwner(uid) || isLinkedCoach(uid);
     }
 
     match /matchReports/{uid}/reports/{reportId} {

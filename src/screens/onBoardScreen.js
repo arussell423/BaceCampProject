@@ -24,6 +24,10 @@ export class onBoardScreen extends Component {
     if (page !== this.state.page) this.setState({ page });
   };
 
+  onScrollEnd = (e) => {
+    this.onScroll(e);
+  };
+
   next = () => {
     const { page } = this.state;
     if (page < slides.length - 1) {
@@ -50,8 +54,11 @@ export class onBoardScreen extends Component {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={this.onScroll}
-          scrollEventThrottle={16}
+          onMomentumScrollEnd={this.onScrollEnd}
+          onScroll={this.onScroll}
+          scrollEventThrottle={200}
+          snapToInterval={width}
+          decelerationRate="fast"
           style={styles.carousel}
           contentContainerStyle={{ width: width * slides.length }}
         >
