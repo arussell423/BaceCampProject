@@ -60,6 +60,13 @@ export class CoachRosterScreen extends Component {
     );
   };
 
+  onRefresh = () => {
+    // Data is already live via onSnapshot — briefly show the indicator then clear it
+    this.setState({ refreshing: true }, () => {
+      setTimeout(() => this.setState({ refreshing: false }), 800);
+    });
+  };
+
   sendInvite = async () => {
     const { inviteEmail } = this.state;
     const trimmed = inviteEmail.trim().toLowerCase();
@@ -168,7 +175,7 @@ export class CoachRosterScreen extends Component {
           <ScrollView
             contentContainerStyle={styles.container}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={() => this.setState({ refreshing: true })} />
+              <RefreshControl refreshing={refreshing} onRefresh={this.onRefresh} />
             }
           >
             {/* ── Active Players ───────────────────────────── */}

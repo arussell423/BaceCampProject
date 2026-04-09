@@ -1,8 +1,9 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
   ScrollView, ActivityIndicator, TextInput, Dimensions, Alert, Text,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
@@ -38,6 +39,8 @@ export class CoachPlayerDetailScreen extends Component {
     trendData: [],
   };
 
+  chatScrollRef = createRef();
+
   componentDidMount() {
     this.loadData();
     this.subscribeChat();
@@ -54,7 +57,10 @@ export class CoachPlayerDetailScreen extends Component {
       query(collection(db, 'chats', uid, 'messages'), orderBy('timestamp', 'asc')),
       (snap) => {
         const chatMessages = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        this.setState({ chatMessages });
+        this.setState({ chatMessages }, () => {
+          // Auto-scroll to latest message
+          setTimeout(() => this.chatScrollRef.current?.scrollToEnd({ animated: true }), 100);
+        });
       }
     );
   };
@@ -84,6 +90,10 @@ export class CoachPlayerDetailScreen extends Component {
 
   get playerUid() {
     return this.props.route?.params?.playerUid ?? '';
+  }
+
+  get playerName() {
+    return this.props.route?.params?.playerName ?? this.playerEmail;
   }
 
   get playerEmail() {
@@ -241,8 +251,17 @@ export class CoachPlayerDetailScreen extends Component {
   renderChat() {
     const { chatMessages, chatInput } = this.state;
     return (
-      <View style={{ flex: 1 }}>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={120}
+      >
+        <ScrollView
+          ref={this.chatScrollRef}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: 16 }}
+          onContentSizeChange={() => this.chatScrollRef.current?.scrollToEnd({ animated: false })}
+        >
           {chatMessages.length === 0 ? (
             <Text style={styles.emptyText}>No messages yet from this player.</Text>
           ) : (
@@ -280,24 +299,52 @@ export class CoachPlayerDetailScreen extends Component {
             <MaterialIcons name="send" size={18} color="white" />
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     );
   }
 
-  renderHistory() {    const { evaluations } = this.state;
+  renderHistory() {
+    const { evaluations } = this.state;
+    const SECTION_COLOUR = { physical: '#008000', tactical: '#2196F3', mental: '#9C27B0' };
+
+    function summariseEval(ev) {
+      if (!ev.data) return null;
+      const d = ev.data;
+      if (ev.section === 'physical') {
+        const avg = Math.round(((d.speed || 0) + (d.strength || 0) + (d.power || 0)) / 3);
+        return `Speed ${d.speed}/5 · Strength ${d.strength}/5 · Power ${d.power}/5  (avg ${avg}/5)`;
+      }
+      if (ev.section === 'mental') {
+        return `Attitude ${d.attitude}/10 · Effort ${d.effort}/10 · Nerves ${d.nerves}/10`;
+      }
+      if (ev.section === 'tactical') {
+        return `Winners ${d.winners}/10 · Errors ${d.unforcedErrors}/10 · Placement ${d.shotPlacement}/10`;
+      }
+      return null;
+    }
+
     return (
       <ScrollView contentContainerStyle={[styles.tabContent, { paddingBottom: 100 }]}>
         {evaluations.length === 0 ? (
           <Text style={styles.emptyText}>No evaluation history yet.</Text>
         ) : (
-          evaluations.map((ev) => (
-            <View key={ev.id} style={styles.historyItem}>
-              <Text style={styles.historySection}>{ev.section || 'Session'}</Text>
-              <Text style={styles.historyDate}>
-                {ev.timestamp ? ev.timestamp.toDate().toLocaleDateString() : '—'}
-              </Text>
-            </View>
-          ))
+          evaluations.map((ev) => {
+            const colour = SECTION_COLOUR[ev.section] || '#888';
+            const summary = summariseEval(ev);
+            return (
+              <View key={ev.id} style={styles.historyItem}>
+                <View style={[styles.historyBadge, { backgroundColor: colour + '18', borderLeftColor: colour }]}>
+                  <Text style={[styles.historySection, { color: colour }]}>
+                    {(ev.section || 'Session').charAt(0).toUpperCase() + (ev.section || 'Session').slice(1)}
+                  </Text>
+                  <Text style={styles.historyDate}>
+                    {ev.timestamp ? ev.timestamp.toDate().toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                  </Text>
+                </View>
+                {summary ? <Text style={styles.historySummary}>{summary}</Text> : null}
+              </View>
+            );
+          })
         )}
       </ScrollView>
     );
@@ -309,7 +356,7 @@ export class CoachPlayerDetailScreen extends Component {
 
     return (
       <SafeAreaView style={styles.safeArea}>
-        <AppHeader navigation={this.props.navigation} title="Player Detail" homeScreen="CoachHomeScreen" />
+        <AppHeader navigation={this.props.navigation} title={this.playerName || 'Player Detail'} homeScreen="CoachHomeScreen" />
 
         {/* Tab bar */}
         <View style={styles.tabBar}>
@@ -420,11 +467,15 @@ const styles = StyleSheet.create({
   trainingDesc: { fontSize: 13, color: '#555', lineHeight: 19 },
   videoUrl: { fontSize: 12, color: '#2196F3', marginTop: 8 },
   historyItem: {
-    backgroundColor: 'white', borderRadius: 12, padding: 14, marginBottom: 10,
-    flexDirection: 'row', justifyContent: 'space-between', elevation: 1,
+    backgroundColor: 'white', borderRadius: 12, padding: 14, marginBottom: 10, elevation: 1,
   },
-  historySection: { fontSize: 14, fontWeight: '600', color: '#333', textTransform: 'capitalize' },
+  historyBadge: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    borderLeftWidth: 3, paddingLeft: 8, marginBottom: 4,
+  },
+  historySection: { fontSize: 14, fontWeight: '600', textTransform: 'capitalize' },
   historyDate: { fontSize: 12, color: '#aaa' },
+  historySummary: { fontSize: 12, color: '#555', marginTop: 4, lineHeight: 18 },
   actionRow: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     flexDirection: 'row', padding: 16, backgroundColor: 'white',

@@ -50,11 +50,34 @@ export class CoachSendFeedbackScreen extends Component {
     const { feedbackType, message, videoUrl, photoUri } = this.state;
     const user = auth.currentUser;
     if (!user) return;
-    let content = feedbackType === 'Video' ? videoUrl : feedbackType === 'Photo' ? (photoUri || '') : message;
-    if (!content.trim()) {
-      Alert.alert('Empty', feedbackType === 'Photo' ? 'Please select a photo first.' : 'Please enter your feedback.');
+
+    if (feedbackType === 'Photo') {
+      if (!photoUri) {
+        Alert.alert('No Photo', 'Please select a photo first.');
+        return;
+      }
+      // Photo is stored as a local URI reference — recipient can only see it on this device.
+      // Full cross-device photo sharing requires Firebase Storage (future enhancement).
+      Alert.alert(
+        'Photo Note',
+        'The photo will be saved as a reference. To share photos with players, Firebase Storage integration is needed.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Send Anyway', onPress: () => this._doSendFeedback(feedbackType, photoUri, user) },
+        ]
+      );
       return;
     }
+
+    let content = feedbackType === 'Video' ? videoUrl : message;
+    if (!content.trim()) {
+      Alert.alert('Empty', 'Please enter your feedback.');
+      return;
+    }
+    this._doSendFeedback(feedbackType, content, user);
+  };
+
+  _doSendFeedback = async (feedbackType, content, user) => {
     this.setState({ sending: true });
     try {
       await addDoc(collection(db, 'coachFeedback', this.playerUid, 'messages'), {
@@ -65,10 +88,12 @@ export class CoachSendFeedbackScreen extends Component {
         read: false,
       });
       this.setState({ sent: true, sending: false });
-      // Notify player that coach sent feedback
+      // Notify player
       getPlayerPushToken(this.playerUid)
         .then((token) => sendPushNotification(token, 'New Coach Feedback', `Your coach sent you ${feedbackType.toLowerCase()} feedback`))
         .catch(() => {});
+      // Auto-reset after 3 seconds so coach can send another
+      setTimeout(() => this.setState({ sent: false, message: '', videoUrl: '', photoUri: null }), 3000);
     } catch (e) {
       Alert.alert('Error', 'Could not send feedback.');
       this.setState({ sending: false });
@@ -141,7 +166,8 @@ export class CoachSendFeedbackScreen extends Component {
 
           {sent ? (
             <View style={styles.sentBox}>
-              <Text style={styles.sentText}> Feedback sent to player!</Text>
+              <Text style={styles.sentText}>✅ Feedback sent!</Text>
+              <Text style={{ color: '#555', fontSize: 12, marginTop: 4 }}>Form will reset automatically…</Text>
             </View>
           ) : (
             <TouchableOpacity
@@ -162,11 +188,6 @@ export class CoachSendFeedbackScreen extends Component {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F4F6FA' },
-  headerBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, backgroundColor: 'white', elevation: 2,
-  },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#222' },
   container: { padding: 20, paddingBottom: 40 },
   toLabel: { fontSize: 14, color: '#555', marginBottom: 20 },
   sectionLabel: { fontSize: 13, fontWeight: '600', color: '#888', marginBottom: 10, textTransform: 'uppercase' },

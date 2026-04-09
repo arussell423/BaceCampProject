@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
-import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, addDoc, deleteDoc, doc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 
 export class CoachCalendarScreen extends Component {
   state = {
@@ -56,6 +56,25 @@ export class CoachCalendarScreen extends Component {
       },
       () => {} // silently ignore permission errors
     );
+  };
+
+  deleteEvent = (ev) => {
+    const { selectedPlayer } = this.state;
+    if (!selectedPlayer) return;
+    Alert.alert('Delete Event', `Remove "${ev.title}" from the schedule?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete', style: 'destructive',
+        onPress: async () => {
+          const uid = selectedPlayer.uid || selectedPlayer.id;
+          try {
+            await deleteDoc(doc(db, 'schedules', uid, 'events', ev.id));
+          } catch (e) {
+            Alert.alert('Error', 'Could not delete event.');
+          }
+        },
+      },
+    ]);
   };
 
   addEvent = async () => {
@@ -191,24 +210,58 @@ export class CoachCalendarScreen extends Component {
                 </View>
 
                 {/* Events list */}
-                <Text style={styles.sectionLabel}>
-                  Upcoming Events ({events.length})
-                </Text>
-                {events.length === 0 ? (
-                  <Text style={styles.noEvents}>No events scheduled yet.</Text>
-                ) : (
-                  events.map((ev) => (
-                    <View key={ev.id} style={[styles.eventItem, ev.addedByCoach && styles.eventItemCoach]}>
-                      <View style={styles.eventDateBadge}>
-                        <Text style={styles.eventDate}>{ev.date}</Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.eventTitle}>{ev.title}</Text>
-                        <Text style={styles.eventType}>{ev.type}{ev.addedByCoach ? '  ·  Coach' : ''}</Text>
-                      </View>
-                    </View>
-                  ))
-                )}
+                {(() => {
+                  const today = new Date().toISOString().split('T')[0];
+                  const upcoming = events.filter((ev) => ev.date >= today);
+                  const past = events.filter((ev) => ev.date < today);
+                  return (
+                    <>
+                      <Text style={styles.sectionLabel}>
+                        Upcoming Events ({upcoming.length})
+                      </Text>
+                      {upcoming.length === 0 ? (
+                        <Text style={styles.noEvents}>No upcoming events.</Text>
+                      ) : (
+                        upcoming.map((ev) => (
+                          <View key={ev.id} style={[styles.eventItem, ev.addedByCoach && styles.eventItemCoach]}>
+                            <View style={styles.eventDateBadge}>
+                              <Text style={styles.eventDate}>{ev.date}</Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.eventTitle}>{ev.title}</Text>
+                              <Text style={styles.eventType}>{ev.type}{ev.addedByCoach ? '  ·  Coach' : ''}</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => this.deleteEvent(ev)} style={styles.deleteEventBtn}>
+                              <MaterialIcons name="close" size={16} color="#bbb" />
+                            </TouchableOpacity>
+                          </View>
+                        ))
+                      )}
+
+                      {past.length > 0 && (
+                        <>
+                          <Text style={[styles.sectionLabel, { marginTop: 16 }]}>
+                            Past Events ({past.length})
+                          </Text>
+                          {past.slice().reverse().map((ev) => (
+                            <View key={ev.id} style={[styles.eventItem, styles.eventItemPast]}>
+                              <View style={[styles.eventDateBadge, { backgroundColor: '#eee' }]}>
+                                <Text style={[styles.eventDate, { color: '#aaa' }]}>{ev.date}</Text>
+                              </View>
+                              <View style={{ flex: 1 }}>
+                                <Text style={[styles.eventTitle, { color: '#aaa' }]}>{ev.title}</Text>
+                                <Text style={styles.eventType}>{ev.type}</Text>
+                              </View>
+                              <TouchableOpacity onPress={() => this.deleteEvent(ev)} style={styles.deleteEventBtn}>
+                                <MaterialIcons name="close" size={16} color="#ccc" />
+                              </TouchableOpacity>
+                            </View>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </>
             )}
           </ScrollView>
@@ -257,6 +310,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', elevation: 1,
   },
   eventItemCoach: { borderLeftWidth: 3, borderLeftColor: '#008000' },
+  eventItemPast: { opacity: 0.55 },
+  deleteEventBtn: { padding: 6, marginLeft: 4 },
   eventDateBadge: { backgroundColor: '#e8f5e9', borderRadius: 8, padding: 8, marginRight: 12 },
   eventDate: { fontSize: 12, color: '#008000', fontWeight: '600' },
   eventTitle: { fontSize: 14, fontWeight: '600', color: '#222' },

@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, onSnapshot } from 'firebase/firestore';
 
 const SORT_OPTIONS = ['Performance', 'Wellness', 'Name'];
 
@@ -29,53 +29,53 @@ export class CoachDashboardScreen extends Component {
   };
 
   componentDidMount() {
-    this.loadPlayers();
+    this.subscribeRoster();
   }
 
-  loadPlayers = async () => {
+  componentWillUnmount() {
+    if (this._unsub) this._unsub();
+  }
+
+  subscribeRoster = () => {
     const user = auth.currentUser;
     if (!user) return;
-    try {
-      const snap = await getDocs(collection(db, 'playerRosters', user.uid, 'players'));
+    this._unsub = onSnapshot(
+      collection(db, 'playerRosters', user.uid, 'players'),
+      async (snap) => {
+        this.loadPlayers(snap.docs.filter((d) => !d.data().invited));
+      },
+      () => this.setState({ loading: false }),
+    );
+  };
 
-      const players = await Promise.all(snap.docs.filter(d => !d.data().invited).map(async (playerDoc) => {
+  loadPlayers = async (playerDocs) => {
+    try {
+      const players = await Promise.all(playerDocs.map(async (playerDoc) => {
         const p = { id: playerDoc.id, ...playerDoc.data() };
-        // Use Firebase UID if the player has linked; fall back to doc ID (sanitized email)
         const lookupId = p.uid || playerDoc.id;
         try {
           const evalSnap = await getDocs(query(collection(db, 'evaluations', lookupId, 'sessions'), orderBy('timestamp', 'desc'), limit(5)));
-
           const evals = evalSnap.docs.map((d) => d.data());
           const physEval = evals.find((e) => e.section === 'physical');
           const mentalEval = evals.find((e) => e.section === 'mental');
-
           let perfScore = 0;
           let wellnessScore = 0;
-
-          if (physEval && physEval.data) {
+          if (physEval?.data) {
             const d = physEval.data;
-            perfScore = Math.round(
-              (((d.speed || 0) + (d.strength || 0) + (d.power || 0)) / 15) * 100
-            );
+            perfScore = Math.round((((d.speed || 0) + (d.strength || 0) + (d.power || 0)) / 15) * 100);
           }
-          if (mentalEval && mentalEval.data) {
+          if (mentalEval?.data) {
             const d = mentalEval.data;
-            wellnessScore = Math.round(
-              (((d.attitude || 0) + (d.effort || 0) + (d.nerves || 0)) / 30) * 100
-            );
+            // attitude/effort/nerves are rated 1-10; max = 30
+            wellnessScore = Math.round((((d.attitude || 0) + (d.effort || 0) + (d.nerves || 0)) / 30) * 100);
           }
-
           const lastEval = evals[0];
-          const lastEvalDate = lastEval && lastEval.timestamp
-            ? lastEval.timestamp.toDate().toISOString()
-            : null;
-
+          const lastEvalDate = lastEval?.timestamp ? lastEval.timestamp.toDate().toISOString() : null;
           return { ...p, perfScore, wellnessScore, lastEvalDate };
         } catch (e) {
           return { ...p, perfScore: 0, wellnessScore: 0, lastEvalDate: null };
         }
       }));
-
       this.setState({ players, loading: false });
     } catch (e) {
       this.setState({ loading: false });
@@ -169,11 +169,6 @@ export class CoachDashboardScreen extends Component {
 
 const dbStyles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F4F6FA' },
-  headerBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, backgroundColor: 'white', elevation: 2,
-  },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#222' },
   sortBar: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: 'white',
     paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#eee',

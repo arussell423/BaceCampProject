@@ -6,12 +6,13 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
 import { doc, getDoc, collection, onSnapshot, query, where, limit, getDocs } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 
 const NAV_CARDS = [
   { label: 'My Players',    icon: 'account-group',      type: 'material-community', screen: 'CoachRosterScreen',   color: '#1B5E20', bg: '#E8F5E9' },
-  { label: 'Add Training',  icon: 'dumbbell',            type: 'material-community', screen: 'CoachRosterScreen',   color: '#0D47A1', bg: '#E3F2FD', subtitle: 'Select player first' },
-  { label: 'Send Feedback', icon: 'comment-text-outline', type: 'material-community', screen: 'CoachRosterScreen',   color: '#E65100', bg: '#FFF3E0', subtitle: 'Select player first' },
+  { label: 'Add Training',  icon: 'dumbbell',            type: 'material-community', screen: 'CoachRosterScreen',   color: '#0D47A1', bg: '#E3F2FD', subtitle: 'Pick a player first' },
+  { label: 'Send Feedback', icon: 'comment-text-outline', type: 'material-community', screen: 'CoachRosterScreen',   color: '#E65100', bg: '#FFF3E0', subtitle: 'Pick a player first' },
   { label: 'Schedule',      icon: 'calendar-month',      type: 'material-community', screen: 'CoachCalendarScreen', color: '#4A148C', bg: '#F3E5F5' },
   { label: 'Dashboard',     icon: 'chart-line',          type: 'material-community', screen: 'CoachDashboardScreen', color: '#B71C1C', bg: '#FFEBEE' },
   { label: 'Profile',       icon: 'account-circle',      type: 'material-community', screen: 'ProfileScreen',       color: '#37474F', bg: '#ECEFF1' },
@@ -57,7 +58,7 @@ export class CoachHomeScreen extends Component {
         const playerCount = activePlayers.length;
 
         // Count new evals in last 24h from active players
-        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const cutoff = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
         let newEvalCount = 0;
         for (const playerDoc of activePlayers) {
           try {

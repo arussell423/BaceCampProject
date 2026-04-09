@@ -8,7 +8,7 @@ import { auth, db } from '../../components/Firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getPlayerPushToken, sendPushNotification } from '../../services/notificationService';
 
-const CATEGORIES = ['Speed', 'Strength', 'Power', 'Mobility', 'Flexibility'];
+const CATEGORIES = ['Speed', 'Strength', 'Power', 'Footwork', 'Flexibility'];
 
 export class CoachAddTrainingScreen extends Component {
   state = {
@@ -137,11 +137,6 @@ export class CoachAddTrainingScreen extends Component {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F4F6FA' },
-  headerBar: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, backgroundColor: 'white', elevation: 2,
-  },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#222' },
   container: { padding: 20, paddingBottom: 40 },
   toLabel: { fontSize: 14, color: '#555', marginBottom: 16 },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: '#888', marginBottom: 6, textTransform: 'uppercase' },
