@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import {
   View, StyleSheet, SafeAreaView, TouchableOpacity,
-  TextInput, Alert, ScrollView, ActivityIndicator, Text,
+  TextInput, Alert, ScrollView, ActivityIndicator, Text, Image,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { auth, db } from '../../components/Firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getPlayerPushToken, sendPushNotification } from '../../services/notificationService';
@@ -16,6 +17,7 @@ export class CoachSendFeedbackScreen extends Component {
     feedbackType: 'Text',
     message: '',
     videoUrl: '',
+    photoUri: null,
     sending: false,
     sent: false,
   };
@@ -28,13 +30,29 @@ export class CoachSendFeedbackScreen extends Component {
     return this.props.route?.params?.playerEmail ?? '';
   }
 
+  pickPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please allow photo access in Settings.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      allowsEditing: true,
+    });
+    if (!result.canceled && result.assets?.length) {
+      this.setState({ photoUri: result.assets[0].uri });
+    }
+  };
+
   sendFeedback = async () => {
-    const { feedbackType, message, videoUrl } = this.state;
+    const { feedbackType, message, videoUrl, photoUri } = this.state;
     const user = auth.currentUser;
     if (!user) return;
-    const content = feedbackType === 'Video' ? videoUrl : message;
+    let content = feedbackType === 'Video' ? videoUrl : feedbackType === 'Photo' ? (photoUri || '') : message;
     if (!content.trim()) {
-      Alert.alert('Empty', 'Please enter your feedback.');
+      Alert.alert('Empty', feedbackType === 'Photo' ? 'Please select a photo first.' : 'Please enter your feedback.');
       return;
     }
     this.setState({ sending: true });
@@ -97,13 +115,17 @@ export class CoachSendFeedbackScreen extends Component {
           )}
 
           {feedbackType === 'Photo' && (
-            <TouchableOpacity
-              style={styles.photoBtn}
-              onPress={() => Alert.alert('Coming Soon', 'ImagePicker would open here on device')}
-            >
-              <MaterialIcons name="photo-camera" size={36} color="#008000" />
-              <Text style={styles.photoBtnText}>Tap to attach photo</Text>
-            </TouchableOpacity>
+            <View>
+              <TouchableOpacity style={styles.photoBtn} onPress={this.pickPhoto}>
+                <MaterialIcons name="photo-camera" size={36} color="#008000" />
+                <Text style={styles.photoBtnText}>
+                  {this.state.photoUri ? 'Change Photo' : 'Tap to attach photo'}
+                </Text>
+              </TouchableOpacity>
+              {this.state.photoUri ? (
+                <Image source={{ uri: this.state.photoUri }} style={styles.photoPreview} resizeMode="cover" />
+              ) : null}
+            </View>
           )}
 
           {feedbackType === 'Video' && (
@@ -171,6 +193,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   photoBtnText: { color: '#008000', fontWeight: '600', marginTop: 10, fontSize: 14 },
+  photoPreview: { width: '100%', height: 200, borderRadius: 12, marginBottom: 16 },
   sendBtn: {
     backgroundColor: '#008000', borderRadius: 12, paddingVertical: 14,
     alignItems: 'center', elevation: 1,

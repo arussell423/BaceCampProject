@@ -348,10 +348,24 @@ export class EvaluationScreen extends Component {
     addDoc(collection(db, 'evaluations', user.uid, 'sessions'), { section, data, timestamp: serverTimestamp() })
       .then(() => {
         this.setState((prev) => ({ saved: { ...prev.saved, [section]: true } }));
-        Alert.alert(' Saved!', `${section.charAt(0).toUpperCase() + section.slice(1)} evaluation saved. Your virtual coach will review it!`);
+        const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1);
+        // Offer AI Feedback after saving
+        Alert.alert(
+          '✅ Saved!',
+          `${sectionLabel} evaluation saved. Would you like personalised AI coaching advice based on your results?`,
+          [
+            { text: 'Later', style: 'cancel' },
+            {
+              text: 'Get AI Feedback',
+              onPress: () => {
+                const prompt = `I just saved my ${sectionLabel.toLowerCase()} evaluation. Please give me personalised coaching advice based on my latest ${sectionLabel.toLowerCase()} scores.`;
+                this.props.navigation.navigate('AICoachScreen', { initialPrompt: prompt });
+              },
+            },
+          ]
+        );
         // Notify coach that player submitted an evaluation
         const playerName = user.displayName || user.email || 'Your player';
-        const sectionLabel = section.charAt(0).toUpperCase() + section.slice(1);
         getCoachPushToken(user.email)
           .then((token) => sendPushNotification(token, 'New Evaluation Submitted', `${playerName} submitted their ${sectionLabel} evaluation`))
           .catch(() => {});

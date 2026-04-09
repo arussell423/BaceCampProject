@@ -7,7 +7,7 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppHeader } from '../components/AppHeader';
 import { auth, db } from '../components/Firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { sendPasswordResetEmail, signOut, updateProfile } from 'firebase/auth';
+import { sendPasswordResetEmail, signOut, updateProfile, verifyBeforeUpdateEmail } from 'firebase/auth';
 import { triggerRoleChange } from '../components/roleManager';
 
 export class ProfileScreen extends Component {
@@ -82,6 +82,34 @@ export class ProfileScreen extends Component {
       .catch(() => Alert.alert('Error', 'Could not send reset email.'));
   };
 
+  changeEmail = () => {
+    Alert.prompt(
+      'Change Email',
+      'Enter your new email address:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send Verification',
+          onPress: async (newEmail) => {
+            if (!newEmail || !newEmail.includes('@')) {
+              Alert.alert('Invalid Email', 'Please enter a valid email address.');
+              return;
+            }
+            const user = auth.currentUser;
+            if (!user) return;
+            try {
+              await verifyBeforeUpdateEmail(user, newEmail.trim());
+              Alert.alert('Verification Sent', `A verification email has been sent to ${newEmail}. Your email will update once you verify it.`);
+            } catch (e) {
+              Alert.alert('Error', e.message || 'Could not send verification email. Please re-login and try again.');
+            }
+          },
+        },
+      ],
+      'plain-text'
+    );
+  };
+
   logout = () => {
     signOut(auth).catch(() => {});
   };
@@ -141,6 +169,11 @@ export class ProfileScreen extends Component {
               {/* Change Password */}
               <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={this.changePassword}>
                 <Text style={styles.btnOutlineText}>Change Password</Text>
+              </TouchableOpacity>
+
+              {/* Change Email */}
+              <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={this.changeEmail}>
+                <Text style={styles.btnOutlineText}>Change Email</Text>
               </TouchableOpacity>
 
               {/* Switch Role */}

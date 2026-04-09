@@ -60,8 +60,13 @@ service cloud.firestore {
 
     // ── Coach rosters ──────────────────────────────────────────────────────────
     match /playerRosters/{coachUid}/players/{playerId} {
-      // Only the owning coach manages their roster
+      // Coach manages their full roster
       allow read, write: if isOwner(coachUid);
+      // Player can update ONLY their own entry when accepting an invite (sets uid, name, invited, linkedAt)
+      allow update: if isAuth() &&
+        resource.data.email == request.auth.token.email &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['uid', 'name', 'invited', 'linkedAt']);
     }
 
     // ── Player→Coach lookup (for push notifications) ───────────────────────────
@@ -75,8 +80,12 @@ service cloud.firestore {
     // ── Coach invite requests ──────────────────────────────────────────────────
     match /linkRequests/{requestId} {
       allow create: if isCoach();
-      allow read: if isAuth() && resource.data.coachUid == request.auth.uid;
-      // Player can accept/decline — match by stored playerUid OR email token (belt+braces)
+      // Coach reads their own requests; player reads invites addressed to them
+      allow read: if isAuth() && (
+        resource.data.coachUid == request.auth.uid ||
+        resource.data.playerEmail == request.auth.token.email
+      );
+      // Player can accept — match by stored playerUid OR email token (belt+braces)
       allow update: if isAuth() && (
         resource.data.get('playerUid','') == request.auth.uid ||
         resource.data.playerEmail == request.auth.token.email

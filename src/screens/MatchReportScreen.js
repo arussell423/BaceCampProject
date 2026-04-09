@@ -2,8 +2,10 @@ import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, SafeAreaView,
-  TouchableOpacity, TextInput, Alert, Text, ActivityIndicator,
+  TouchableOpacity, TextInput, Alert, Text, ActivityIndicator, Image,
 } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { auth, db } from '../components/Firebase';
 import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -13,9 +15,10 @@ export class MatchReportScreen extends Component {
     venue: '',
     myScore: '',
     oppScore: '',
-    result: null,      // 'win' | 'loss' | 'draw'
+    result: null,
     notes: '',
     gamePlan: '',
+    photoUri: null,
     loading: false,
     saved: false,
     pastReports: [],
@@ -25,6 +28,22 @@ export class MatchReportScreen extends Component {
   componentDidMount() {
     this.loadPastReports();
   }
+
+  pickPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Required', 'Please allow photo access in Settings.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 0.7,
+      allowsEditing: true,
+    });
+    if (!result.canceled && result.assets?.length) {
+      this.setState({ photoUri: result.assets[0].uri });
+    }
+  };
 
   loadPastReports = async () => {
     const user = auth.currentUser;
@@ -38,7 +57,7 @@ export class MatchReportScreen extends Component {
   };
 
   submit = async () => {
-    const { opponent, myScore, oppScore, result, notes, gamePlan } = this.state;
+    const { opponent, myScore, oppScore, result, notes, gamePlan, photoUri } = this.state;
     if (!opponent.trim()) { Alert.alert('Opponent name required'); return; }
     if (!result) { Alert.alert('Please select a result (Win / Loss / Draw)'); return; }
 
@@ -54,13 +73,14 @@ export class MatchReportScreen extends Component {
         result,
         notes: notes.trim(),
         gamePlan: gamePlan.trim(),
+        photoUri: photoUri || null,
         timestamp: serverTimestamp(),
       });
       this.setState({
         loading: false, saved: true,
-        opponent: '', myScore: '', oppScore: '', result: null, notes: '', gamePlan: '',
+        opponent: '', myScore: '', oppScore: '', result: null, notes: '', gamePlan: '', photoUri: null,
       });
-      Alert.alert(' Match Report Saved!', 'Your report has been saved to your log.');
+      Alert.alert('✅ Match Report Saved!', 'Your report has been saved to your log.');
       this.loadPastReports();
     } catch (e) {
       this.setState({ loading: false });
@@ -69,7 +89,7 @@ export class MatchReportScreen extends Component {
   };
 
   render() {
-    const { opponent, venue, myScore, oppScore, result, notes, gamePlan, loading, pastReports, showPast } = this.state;
+    const { opponent, venue, myScore, oppScore, result, notes, gamePlan, photoUri, loading, pastReports, showPast } = this.state;
 
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -147,6 +167,15 @@ export class MatchReportScreen extends Component {
                 onChangeText={(t) => this.setState({ gamePlan: t })}
               />
 
+              <Text style={styles.sectionLabel}>Photo (optional)</Text>
+              <TouchableOpacity style={styles.photoBtn} onPress={this.pickPhoto}>
+                <MaterialIcons name="photo-camera" size={28} color="#008000" />
+                <Text style={styles.photoBtnText}>{photoUri ? 'Change Photo' : 'Attach a photo'}</Text>
+              </TouchableOpacity>
+              {photoUri ? (
+                <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
+              ) : null}
+
               <TouchableOpacity
                 style={[styles.saveBtn, { marginTop: 20, paddingVertical: 12, alignItems: 'center' }]}
                 onPress={this.submit}
@@ -213,6 +242,13 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 12, color: '#666', marginBottom: 4 },
   input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12, fontSize: 14, backgroundColor: 'white', marginBottom: 8 },
   textArea: { height: 100, textAlignVertical: 'top' },
+  photoBtn: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: 'white',
+    borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 2,
+    borderColor: '#e8f5e9', borderStyle: 'dashed',
+  },
+  photoBtnText: { color: '#008000', fontWeight: '600', marginLeft: 10, fontSize: 14 },
+  photoPreview: { width: '100%', height: 180, borderRadius: 12, marginBottom: 14 },
   scoreRow: { flexDirection: 'row' },
   resultRow: { flexDirection: 'row', marginBottom: 8 },
   resultChip: { flex: 1, borderWidth: 2, borderColor: '#ddd', borderRadius: 10, padding: 10, marginRight: 8, alignItems: 'center' },

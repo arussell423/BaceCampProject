@@ -49,6 +49,12 @@ export class AICoachScreen extends Component {
 
     this._uid = uid;
     this.loadLastEval();
+
+    // Auto-send prompt if navigated from Evaluation screen
+    const initialPrompt = this.props.route?.params?.initialPrompt;
+    if (initialPrompt) {
+      setTimeout(() => this.sendMessage(initialPrompt), 600);
+    }
   }
 
   loadLastEval = async () => {

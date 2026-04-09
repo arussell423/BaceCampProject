@@ -2,12 +2,12 @@ import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, SafeAreaView,
-  TouchableOpacity, FlatList, Text,
+  TouchableOpacity, FlatList, Text, Alert,
 } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { auth, db } from '../components/Firebase';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, limit, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const CATEGORIES = ['Strength', 'Power', 'Speed', 'Footwork', 'Flexibility'];
 
@@ -46,6 +46,18 @@ const LEVEL_COLOURS = {
 
 class WorkoutCard extends Component {
   state = { completed: false, rating: null };
+
+  setRating = (value) => {
+    this.setState({ rating: value });
+    const user = auth.currentUser;
+    if (!user) return;
+    const { workout } = this.props;
+    setDoc(doc(db, 'workoutRatings', user.uid, 'ratings', workout.id), {
+      rating: value,
+      workoutTitle: workout.title,
+      ratedAt: serverTimestamp(),
+    }).catch(() => {});
+  };
 
   complete = () => {
     const { workout } = this.props;
@@ -92,10 +104,10 @@ class WorkoutCard extends Component {
             </View>
             {!rating ? (
               <View style={cardStyles.ratingRow}>
-                <TouchableOpacity onPress={() => this.setState({ rating: 'like' })} style={cardStyles.ratingBtn}>
+                <TouchableOpacity onPress={() => this.setRating('like')} style={cardStyles.ratingBtn}>
                   <MaterialCommunityIcons name="thumb-up-outline" size={28} color="#008000" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => this.setState({ rating: 'dislike' })} style={cardStyles.ratingBtn}>
+                <TouchableOpacity onPress={() => this.setRating('dislike')} style={cardStyles.ratingBtn}>
                   <MaterialCommunityIcons name="thumb-down-outline" size={28} color="#e53935" />
                 </TouchableOpacity>
               </View>

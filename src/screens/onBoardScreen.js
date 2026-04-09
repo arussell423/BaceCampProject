@@ -1,22 +1,33 @@
-import React, { Component } from "react";
-import { View, StyleSheet, Dimensions, Image, TouchableOpacity, Text, ScrollView } from "react-native";
+import React, { Component, createRef } from "react";
+import { View, StyleSheet, Dimensions, Image, TouchableOpacity, Text, ScrollView, Platform } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const { width } = Dimensions.get("window");
 
 const slides = [
-  { key: "1", title: "Track Your Game",    text: "Log your performance evaluations after every match and training session.",         icon: "clipboard-list",  type: "material-community", color: "#1B5E20" },
-  { key: "2", title: "Smart Training",     text: "Access pre-loaded workouts in Strength, Power, Speed, Footwork and Flexibility.", icon: "dumbbell",        type: "material-community", color: "#0D47A1" },
-  { key: "3", title: "Plan Your Schedule", text: "Keep your calendar organised with colour-coded training and competition days.",    icon: "calendar-month",  type: "material-community", color: "#E65100" },
+  { key: "1", title: "Track Your Game",    text: "Log your performance evaluations after every match and training session.",         icon: "clipboard-list",  color: "#1B5E20" },
+  { key: "2", title: "Smart Training",     text: "Access pre-loaded workouts in Strength, Power, Speed, Footwork and Flexibility.", icon: "dumbbell",        color: "#0D47A1" },
+  { key: "3", title: "Plan Your Schedule", text: "Keep your calendar organised with colour-coded training and competition days.",    icon: "calendar-month",  color: "#E65100" },
 ];
 
 export class onBoardScreen extends Component {
   state = { page: 0 };
+  scrollRef = createRef();
+
+  goToPage = (page) => {
+    this.scrollRef.current?.scrollTo({ x: page * width, animated: true });
+    this.setState({ page });
+  };
+
+  onScroll = (e) => {
+    const page = Math.round(e.nativeEvent.contentOffset.x / width);
+    if (page !== this.state.page) this.setState({ page });
+  };
 
   next = () => {
     const { page } = this.state;
     if (page < slides.length - 1) {
-      this.setState({ page: page + 1 });
+      this.goToPage(page + 1);
     } else {
       this.props.navigation.navigate("EmailInputScreen");
     }
@@ -24,33 +35,43 @@ export class onBoardScreen extends Component {
 
   render() {
     const { page } = this.state;
-    const slide = slides[page];
     return (
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Hero logo — large and prominent */}
+      <View style={styles.root}>
+        {/* Hero logo */}
         <Image
           source={require("../assets/image/bACE_CAMP-logo-transparent.png")}
           style={styles.heroLogo}
           resizeMode="contain"
         />
 
-        {/* Small feature indicator row */}
-        <View style={styles.featureRow}>
-          {slides.map((s, i) => (
-            <View key={s.key} style={[styles.featureChip, i === page && { borderColor: s.color, backgroundColor: s.color + "18" }]}>
-              <MaterialCommunityIcons name={s.icon} size={20} color={i === page ? s.color : "#aaa"} />
+        {/* Horizontal swipeable slides */}
+        <ScrollView
+          ref={this.scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={this.onScroll}
+          scrollEventThrottle={16}
+          style={styles.carousel}
+          contentContainerStyle={{ width: width * slides.length }}
+        >
+          {slides.map((s) => (
+            <View key={s.key} style={styles.slide}>
+              <View style={[styles.iconCircle, { borderColor: s.color, backgroundColor: s.color + "18" }]}>
+                <MaterialCommunityIcons name={s.icon} size={48} color={s.color} />
+              </View>
+              <Text style={styles.title}>{s.title}</Text>
+              <Text style={styles.text}>{s.text}</Text>
             </View>
           ))}
-        </View>
-
-        {/* Slide content */}
-        <Text style={styles.title}>{slide.title}</Text>
-        <Text style={styles.text}>{slide.text}</Text>
+        </ScrollView>
 
         {/* Progress dots */}
         <View style={styles.dotsRow}>
           {slides.map((_, i) => (
-            <View key={i} style={[styles.dot, i === page && styles.dotActive]} />
+            <TouchableOpacity key={i} onPress={() => this.goToPage(i)}>
+              <View style={[styles.dot, i === page && styles.dotActive]} />
+            </TouchableOpacity>
           ))}
         </View>
 
@@ -64,24 +85,25 @@ export class onBoardScreen extends Component {
         >
           <Text style={styles.coachLinkText}>Already have an account? Sign in →</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
-  container:   { flexGrow: 1, backgroundColor: "#F4F6FA", alignItems: "center", justifyContent: "center", padding: 30 },
-  heroLogo:    { width: width * 0.75, height: 180, marginBottom: 32 },
-  featureRow:  { flexDirection: "row", marginBottom: 28 },
-  featureChip: { width: 52, height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "#ddd", marginHorizontal: 8, backgroundColor: "white" },
-  title:       { textAlign: "center", marginBottom: 12, color: "#1A1A1A", fontWeight: "700", fontSize: 22 },
-  text:        { textAlign: "center", color: "#666", fontSize: 15, lineHeight: 24, maxWidth: 300 },
-  dotsRow:     { flexDirection: "row", marginTop: 28 },
-  dot:         { width: 10, height: 10, borderRadius: 5, backgroundColor: "#ccc", marginHorizontal: 5 },
-  dotActive:   { backgroundColor: "#008000" },
-  btn:         { backgroundColor: "#008000", borderRadius: 12, width: width * 0.75, marginTop: 28, paddingVertical: 16, alignItems: "center" },
-  btnText:     { color: "#fff", fontWeight: "bold", fontSize: 18 },
-  coachLink:   { marginTop: 20, padding: 8 },
+  root:       { flex: 1, backgroundColor: "#F4F6FA", alignItems: "center", justifyContent: "center", padding: 30 },
+  heroLogo:   { width: width * 0.65, height: 120, marginBottom: 20 },
+  carousel:   { width, flexGrow: 0 },
+  slide:      { width, alignItems: "center", paddingHorizontal: 30, paddingVertical: 20 },
+  iconCircle: { width: 100, height: 100, borderRadius: 50, alignItems: "center", justifyContent: "center", borderWidth: 2, marginBottom: 20 },
+  title:      { textAlign: "center", marginBottom: 12, color: "#1A1A1A", fontWeight: "700", fontSize: 22 },
+  text:       { textAlign: "center", color: "#666", fontSize: 15, lineHeight: 24, maxWidth: 300 },
+  dotsRow:    { flexDirection: "row", marginTop: 24, marginBottom: 8 },
+  dot:        { width: 10, height: 10, borderRadius: 5, backgroundColor: "#ccc", marginHorizontal: 5 },
+  dotActive:  { backgroundColor: "#008000", width: 24 },
+  btn:        { backgroundColor: "#008000", borderRadius: 12, width: width * 0.75, marginTop: 20, paddingVertical: 16, alignItems: "center" },
+  btnText:    { color: "#fff", fontWeight: "bold", fontSize: 18 },
+  coachLink:  { marginTop: 20, padding: 8 },
   coachLinkText: { color: "#008000", fontSize: 14, textDecorationLine: "underline" },
 });
 
