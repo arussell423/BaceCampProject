@@ -4,10 +4,9 @@
  * When a player logs in, checks for pending coach invites addressed to their
  * email and, if found, links their Firebase UID to the coach's roster.
  *
- * This solves the data model gap where roster docs are keyed by sanitizedEmail
- * but all player data (evaluations, chats, etc.) is keyed by Firebase UID.
- * After this runs, roster docs carry both the sanitizedEmail doc-ID AND a
- * `uid` field containing the player's Firebase UID.
+ * The coach already writes playerCoach/{sanitizedEmail} when they send the
+ * invite, so the player batch only needs to update the roster entry,
+ * their own user profile, and the linkRequest status.
  */
 import { db } from '../components/Firebase';
 import {
@@ -42,28 +41,25 @@ export async function linkPlayerToCoach(user) {
         { merge: true },
       );
 
-      // 2. Store coachUid on player's Firestore profile so Firestore rules
-      //    can verify coach-player relationship with a single get() call.
+      // 2. Store coachUid on player's own Firestore profile
+      //    (player owns users/{uid} — this write is allowed by isOwner rule)
       batch.set(
         doc(db, 'users', uid),
         { coachUid },
         { merge: true },
       );
 
-      // 3. Ensure playerCoach lookup exists (for push notification routing)
-      batch.set(
-        doc(db, 'playerCoach', sanitizedEmail),
-        { coachUid },
-        { merge: true },
-      );
-
-      // 4. Mark invite as accepted and store playerUid for future rule checks
+      // 3. Mark invite as accepted and store playerUid for future rule checks
       batch.update(linkDoc.ref, { status: 'accepted', playerUid: uid });
+
+      // NOTE: playerCoach/{sanitizedEmail} is written by the coach on sendInvite
+      // and must NOT be written here — the player lacks the isCoach() permission
+      // and including it would cause the entire batch to fail silently.
 
       await batch.commit();
     }
   } catch (e) {
     // Non-critical — silently swallow so login never fails
-    if (__DEV__) console.warn('[linkPlayerToCoach]', e);
+    if (typeof __DEV__ !== 'undefined' && __DEV__) console.warn('[linkPlayerToCoach]', e);
   }
 }

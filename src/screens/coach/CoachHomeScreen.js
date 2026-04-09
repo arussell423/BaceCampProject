@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { auth, db } from '../../components/Firebase';
-import { doc, getDoc, collection, getDocs, query, where, limit } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, query, where, limit, getDocs } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 
 const NAV_CARDS = [
@@ -26,40 +26,55 @@ export class CoachHomeScreen extends Component {
   };
 
   componentDidMount() {
-    this.loadCoachData();
+    this.loadCoachName();
+    this.subscribeRoster();
   }
 
-  loadCoachData = async () => {
+  componentWillUnmount() {
+    if (this._rosterUnsub) this._rosterUnsub();
+  }
+
+  loadCoachName = async () => {
     const user = auth.currentUser;
     if (!user) return;
     try {
-      const [userDoc, rosterSnap] = await Promise.all([
-        getDoc(doc(db, 'users', user.uid)),
-        getDocs(collection(db, 'playerRosters', user.uid, 'players')),
-      ]);
-
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
       const coachName = userDoc.exists()
         ? (userDoc.data().displayName || userDoc.data().email || user.email)
         : user.email;
+      this.setState({ coachName });
+    } catch (e) { /* offline */ }
+  };
 
-      const playerCount = rosterSnap.size;
+  subscribeRoster = () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    // Real-time subscription so player count updates immediately when a player links
+    this._rosterUnsub = onSnapshot(
+      collection(db, 'playerRosters', user.uid, 'players'),
+      async (snap) => {
+        const activePlayers = snap.docs.filter((d) => !d.data().invited);
+        const playerCount = activePlayers.length;
 
-      // Check for new evals in last 24h
-      const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      let newEvalCount = 0;
-      for (const playerDoc of rosterSnap.docs) {
-        try {
-          const evalSnap = await getDocs(query(collection(db, 'evaluations', playerDoc.id, 'sessions'), where('timestamp', '>=', cutoff), limit(1)));
-          if (!evalSnap.empty) newEvalCount++;
-        } catch (e) {
-          // ignore per-player errors
+        // Count new evals in last 24h from active players
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        let newEvalCount = 0;
+        for (const playerDoc of activePlayers) {
+          try {
+            const uid = playerDoc.data().uid || playerDoc.id;
+            const evalSnap = await getDocs(query(
+              collection(db, 'evaluations', uid, 'sessions'),
+              where('timestamp', '>=', cutoff),
+              limit(1)
+            ));
+            if (!evalSnap.empty) newEvalCount++;
+          } catch (e) { /* ignore per-player errors */ }
         }
-      }
 
-      this.setState({ coachName, playerCount, newEvalCount, loading: false });
-    } catch (e) {
-      this.setState({ loading: false });
-    }
+        this.setState({ playerCount, newEvalCount, loading: false });
+      },
+      () => this.setState({ loading: false }),
+    );
   };
 
   render() {

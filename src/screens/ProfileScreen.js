@@ -15,6 +15,7 @@ export class ProfileScreen extends Component {
     displayName: '',
     email: '',
     role: 'player',
+    isAdmin: false,
     saving: false,
     switching: false,
     loading: true,
@@ -31,6 +32,7 @@ export class ProfileScreen extends Component {
           this.setState({
             displayName: data.displayName || user.displayName || '',
             role: data.role || 'player',
+            isAdmin: data.isAdmin === true,
             loading: false,
           });
         } else {
@@ -57,8 +59,15 @@ export class ProfileScreen extends Component {
   };
 
   switchRole = async () => {
-    const { role, switching } = this.state;
+    const { role, isAdmin, switching } = this.state;
     if (switching) return;
+    // Admins can switch freely between coach and player for testing
+    // Regular coaches can only preview player mode (one-way unless admin)
+    // Players cannot switch to coach at all (unless admin)
+    if (role !== 'coach' && !isAdmin) {
+      Alert.alert('Access Restricted', 'Only coaches or admins can switch roles.');
+      return;
+    }
     const newRole = role === 'coach' ? 'player' : 'coach';
     const user = auth.currentUser;
     if (!user) return;
@@ -115,9 +124,10 @@ export class ProfileScreen extends Component {
   };
 
   render() {
-    const { displayName, email, role, saving, switching, loading } = this.state;
+    const { displayName, email, role, isAdmin, saving, switching, loading } = this.state;
     const initials = (displayName || email || '?')[0].toUpperCase();
     const isCoach = role === 'coach';
+    const canSwitchRole = isCoach || isAdmin;
 
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -176,21 +186,27 @@ export class ProfileScreen extends Component {
                 <Text style={styles.btnOutlineText}>Change Email</Text>
               </TouchableOpacity>
 
-              {/* Switch Role */}
-              <TouchableOpacity
-                style={[styles.btn, styles.btnSwitch, switching && styles.btnDisabled]}
-                onPress={this.switchRole}
-                disabled={switching}
-              >
-                {switching ? (
-                  <ActivityIndicator size="small" color="#0D47A1" />
-                ) : (
-                  <>
-                    <MaterialIcons name={isCoach ? 'person' : 'people'} size={16} color="#0D47A1" />
-                    <Text style={styles.btnSwitchText}>  Switch to {isCoach ? 'Player' : 'Coach'} Mode</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              {/* Switch Role — coaches/admins only */}
+              {canSwitchRole && (
+                <TouchableOpacity
+                  style={[styles.btn, styles.btnSwitch, switching && styles.btnDisabled]}
+                  onPress={this.switchRole}
+                  disabled={switching}
+                >
+                  {switching ? (
+                    <ActivityIndicator size="small" color="#0D47A1" />
+                  ) : (
+                    <>
+                      <MaterialIcons name={isCoach ? 'person' : 'people'} size={16} color="#0D47A1" />
+                      <Text style={styles.btnSwitchText}>
+                        {'  '}{isAdmin
+                          ? `Switch to ${isCoach ? 'Player' : 'Coach'} Mode`
+                          : 'Preview Player Mode'}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
 
               {/* Linked Apps */}
               <View style={styles.section}>

@@ -20,6 +20,14 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(playerUid)).data.get('coachUid', '') == request.auth.uid;
     }
 
+    // ── App configuration (coach access code etc.) ────────────────────────────
+    match /appConfig/{doc} {
+      // Anyone can read config (to verify coach code on registration)
+      allow read: if isAuth();
+      // Only the platform coach/admin can write config
+      allow write: if isCoach();
+    }
+
     // ── User profiles ──────────────────────────────────────────────────────────
     match /users/{uid} {
       allow read, write: if isOwner(uid);
@@ -103,6 +111,11 @@ service cloud.firestore {
     }
 
     match /speedDrills/{uid}/results/{resultId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    // ── Workout ratings (player thumb up/down on workouts) ─────────────────────
+    match /workoutRatings/{uid}/ratings/{ratingId} {
       allow read, write: if isOwner(uid);
     }
   }
