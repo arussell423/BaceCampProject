@@ -2,12 +2,13 @@ import React, { Component } from 'react';
 import { AppHeader } from '../components/AppHeader';
 import {
   View, StyleSheet, ScrollView, SafeAreaView,
-  TouchableOpacity, FlatList, Text, Alert,
+  TouchableOpacity, FlatList, Text, Alert, TextInput, Linking, Platform,
 } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
-
 import { auth, db } from '../components/Firebase';
-import { collection, query, orderBy, limit, getDocs, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import {
+  collection, query, orderBy, limit, getDocs, doc, setDoc, updateDoc, serverTimestamp, onSnapshot,
+} from 'firebase/firestore';
 
 const CATEGORIES = ['Strength', 'Power', 'Speed', 'Footwork', 'Flexibility'];
 
@@ -37,46 +38,25 @@ const WORKOUTS = {
   ],
 };
 
-const LEVEL_COLOURS = {
-  Beginner: '#4CAF50',
-  Intermediate: '#FF9800',
-  Advanced: '#F44336',
-  'All Levels': '#2196F3',
-};
+const LEVEL_COLOURS = { Beginner: '#4CAF50', Intermediate: '#FF9800', Advanced: '#F44336', 'All Levels': '#2196F3' };
+const DIFF_COLORS = { Beginner: '#4CAF50', Intermediate: '#FF9800', Advanced: '#F44336' };
 
 class WorkoutCard extends Component {
   state = { completed: false, rating: null };
-
   setRating = (value) => {
     this.setState({ rating: value });
     const user = auth.currentUser;
     if (!user) return;
-    const { workout } = this.props;
-    setDoc(doc(db, 'workoutRatings', user.uid, 'ratings', workout.id), {
-      rating: value,
-      workoutTitle: workout.title,
-      ratedAt: serverTimestamp(),
+    setDoc(doc(db, 'workoutRatings', user.uid, 'ratings', this.props.workout.id), {
+      rating: value, workoutTitle: this.props.workout.title, ratedAt: serverTimestamp(),
     }).catch(() => {});
   };
-
   complete = () => {
-    const { workout } = this.props;
     this.setState({ completed: true });
-    // Show motivational message and related workout suggestion
-    const related = Object.values(WORKOUTS).flat().filter(
-      (w) => w.id !== workout.id && w.level === workout.level
-    );
+    const related = Object.values(WORKOUTS).flat().filter((w) => w.id !== this.props.workout.id && w.level === this.props.workout.level);
     const suggestion = related[Math.floor(Math.random() * related.length)];
-    setTimeout(() => {
-      Alert.alert(
-        '🎉 Great Work!',
-        suggestion
-          ? `Well done on completing "${workout.title}"!\n\nYou might also enjoy:\n"${suggestion.title}" (${suggestion.duration})`
-          : `Well done on completing "${workout.title}"! Keep building that momentum!`
-      );
-    }, 400);
+    setTimeout(() => Alert.alert('Great Work!', suggestion ? `Well done on "${this.props.workout.title}"!\n\nYou might also enjoy:\n"${suggestion.title}" (${suggestion.duration})` : `Well done on "${this.props.workout.title}"! Keep it up!`), 400);
   };
-
   render() {
     const { workout } = this.props;
     const { completed, rating } = this.state;
@@ -88,12 +68,11 @@ class WorkoutCard extends Component {
             <Text style={[cardStyles.levelText, { color: LEVEL_COLOURS[workout.level] }]}>{workout.level}</Text>
           </View>
         </View>
-        <Text style={cardStyles.duration}>⏱ {workout.duration}</Text>
+        <Text style={cardStyles.duration}>{workout.duration}</Text>
         <Text style={cardStyles.desc}>{workout.desc}</Text>
-
         {!completed ? (
           <TouchableOpacity style={cardStyles.completeBtn} onPress={this.complete}>
-          <MaterialIcons name="check-circle-outline" size={18} color="#008000" />
+            <MaterialIcons name="check-circle-outline" size={18} color="#008000" />
             <Text style={cardStyles.completeBtnText}> Mark as Complete</Text>
           </TouchableOpacity>
         ) : (
@@ -104,19 +83,144 @@ class WorkoutCard extends Component {
             </View>
             {!rating ? (
               <View style={cardStyles.ratingRow}>
-                <TouchableOpacity onPress={() => this.setRating('like')} style={cardStyles.ratingBtn}>
-                  <MaterialCommunityIcons name="thumb-up-outline" size={28} color="#008000" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => this.setRating('dislike')} style={cardStyles.ratingBtn}>
-                  <MaterialCommunityIcons name="thumb-down-outline" size={28} color="#e53935" />
-                </TouchableOpacity>
+                <TouchableOpacity onPress={() => this.setRating('like')} style={cardStyles.ratingBtn}><MaterialCommunityIcons name="thumb-up-outline" size={28} color="#008000" /></TouchableOpacity>
+                <TouchableOpacity onPress={() => this.setRating('dislike')} style={cardStyles.ratingBtn}><MaterialCommunityIcons name="thumb-down-outline" size={28} color="#e53935" /></TouchableOpacity>
               </View>
             ) : (
-              <Text style={{ color: '#555', marginTop: 6 }}>
-                {rating === 'like' ? 'Great work! Keep it up!' : 'No worries — try a different workout next time.'}
-              </Text>
+              <Text style={{ color: '#555', marginTop: 6 }}>{rating === 'like' ? 'Great work! Keep it up!' : "No worries — try a different workout next time."}</Text>
             )}
           </View>
+        )}
+      </View>
+    );
+  }
+}
+
+class CoachSessionCard extends Component {
+  state = { playerNote: '', saving: false, localStatus: null };
+
+  markStatus = async (newStatus) => {
+    const { session } = this.props;
+    const user = auth.currentUser;
+    if (!user) return;
+    this.setState({ saving: true });
+    try {
+      await updateDoc(doc(db, 'coachTraining', user.uid, 'sessions', session.id), {
+        status: newStatus,
+        completedAt: newStatus === 'done' ? serverTimestamp() : null,
+        playerNotes: this.state.playerNote.trim() || null,
+      });
+      this.setState({ localStatus: newStatus, saving: false });
+    } catch (e) {
+      Alert.alert('Error', 'Could not update status.');
+      this.setState({ saving: false });
+    }
+  };
+
+  openVideo = (url) => {
+    Linking.openURL(url).catch(() => Alert.alert('Cannot open URL'));
+  };
+
+  render() {
+    const { session } = this.props;
+    const { playerNote, saving, localStatus } = this.state;
+    const status = localStatus || session.status || 'pending';
+    const dc = DIFF_COLORS[session.difficulty] || '#888';
+    const exercises = session.exercises || [];
+    const isDone = status === 'done';
+    const isSkipped = status === 'skipped';
+
+    return (
+      <View style={[coachCardStyles.card, isDone && coachCardStyles.cardDone, isSkipped && coachCardStyles.cardSkipped]}>
+        {/* Header */}
+        <View style={coachCardStyles.headerRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={coachCardStyles.title}>{session.title}</Text>
+            <View style={coachCardStyles.badgeRow}>
+              {session.category ? (
+                <View style={coachCardStyles.catBadge}><Text style={coachCardStyles.catBadgeText}>{session.category}</Text></View>
+              ) : null}
+              {session.difficulty ? (
+                <View style={[coachCardStyles.diffBadge, { backgroundColor: dc + '22', borderColor: dc }]}>
+                  <Text style={[coachCardStyles.diffBadgeText, { color: dc }]}>{session.difficulty}</Text>
+                </View>
+              ) : null}
+              {session.rpe ? (
+                <View style={coachCardStyles.rpeBadge}><Text style={coachCardStyles.rpeBadgeText}>RPE {session.rpe}</Text></View>
+              ) : null}
+            </View>
+          </View>
+          <View style={[coachCardStyles.statusBadge, isDone ? coachCardStyles.statusDone : isSkipped ? coachCardStyles.statusSkipped : coachCardStyles.statusPending]}>
+            <MaterialIcons name={isDone ? 'check-circle' : isSkipped ? 'skip-next' : 'schedule'} size={14} color={isDone ? '#008000' : isSkipped ? '#FF9800' : '#888'} />
+            <Text style={[coachCardStyles.statusText, { color: isDone ? '#008000' : isSkipped ? '#FF9800' : '#888' }]}>{isDone ? 'Done' : isSkipped ? 'Skipped' : 'Pending'}</Text>
+          </View>
+        </View>
+
+        {/* Scheduled date */}
+        {session.scheduledDate ? (
+          <Text style={coachCardStyles.dateText}>{new Date(session.scheduledDate).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+        ) : null}
+
+        {/* Description */}
+        {session.description ? <Text style={coachCardStyles.desc}>{session.description}</Text> : null}
+
+        {/* Exercises */}
+        {exercises.length > 0 && (
+          <View style={coachCardStyles.exSection}>
+            <Text style={coachCardStyles.exSectionTitle}>EXERCISES</Text>
+            {exercises.map((ex, i) => (
+              <View key={i} style={coachCardStyles.exRow}>
+                <View style={coachCardStyles.exNum}><Text style={coachCardStyles.exNumText}>{i + 1}</Text></View>
+                <View style={{ flex: 1 }}>
+                  <Text style={coachCardStyles.exName}>{ex.name}</Text>
+                  <Text style={coachCardStyles.exMeta}>
+                    {ex.sets}x{ex.reps}{ex.rest ? `  ·  Rest ${ex.rest}` : ''}{ex.duration ? `  ·  ${ex.duration}` : ''}
+                  </Text>
+                  {ex.notes ? <Text style={coachCardStyles.exNotes}>{ex.notes}</Text> : null}
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Video */}
+        {session.videoUrl ? (
+          <TouchableOpacity style={coachCardStyles.videoBtn} onPress={() => this.openVideo(session.videoUrl)}>
+            <MaterialCommunityIcons name="youtube" size={16} color="#FF0000" />
+            <Text style={coachCardStyles.videoBtnText}> Watch Video</Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {/* Player notes input */}
+        {!isDone && !isSkipped ? (
+          <View style={coachCardStyles.noteSection}>
+            <TextInput
+              style={coachCardStyles.noteInput}
+              placeholder="Add notes before completing (optional)..."
+              placeholderTextColor="#bbb"
+              value={playerNote}
+              onChangeText={(t) => this.setState({ playerNote: t })}
+              multiline
+            />
+          </View>
+        ) : null}
+
+        {/* Action buttons */}
+        {!isDone && !isSkipped ? (
+          <View style={coachCardStyles.actionRow}>
+            <TouchableOpacity style={coachCardStyles.doneBtn} onPress={() => this.markStatus('done')} disabled={saving}>
+              <MaterialIcons name="check-circle-outline" size={16} color="white" />
+              <Text style={coachCardStyles.doneBtnText}> Done</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={coachCardStyles.skipBtn} onPress={() => this.markStatus('skipped')} disabled={saving}>
+              <MaterialIcons name="skip-next" size={16} color="#FF9800" />
+              <Text style={coachCardStyles.skipBtnText}> Skip</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={coachCardStyles.undoBtn} onPress={() => this.setState({ localStatus: 'pending' })}>
+            <Text style={coachCardStyles.undoBtnText}>Undo</Text>
+          </TouchableOpacity>
         )}
       </View>
     );
@@ -139,24 +243,65 @@ const cardStyles = StyleSheet.create({
   ratingBtn: { marginRight: 16, padding: 4 },
 });
 
+const coachCardStyles = StyleSheet.create({
+  card: { backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 12, elevation: 3, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, borderLeftWidth: 4, borderLeftColor: '#9C27B0' },
+  cardDone: { borderLeftColor: '#008000' },
+  cardSkipped: { borderLeftColor: '#FF9800', opacity: 0.85 },
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
+  title: { fontSize: 15, fontWeight: 'bold', color: '#222', marginBottom: 6 },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  catBadge: { backgroundColor: '#EDE7F6', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  catBadgeText: { color: '#7B1FA2', fontSize: 11, fontWeight: '700' },
+  diffBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2 },
+  diffBadgeText: { fontSize: 11, fontWeight: '700' },
+  rpeBadge: { backgroundColor: '#FFF3E0', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  rpeBadgeText: { color: '#E65100', fontSize: 11, fontWeight: '700' },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, gap: 3 },
+  statusPending: { backgroundColor: '#F5F5F5' },
+  statusDone: { backgroundColor: '#E8F5E9' },
+  statusSkipped: { backgroundColor: '#FFF3E0' },
+  statusText: { fontSize: 11, fontWeight: '700' },
+  dateText: { fontSize: 12, color: '#666', marginBottom: 6 },
+  desc: { fontSize: 13, color: '#555', lineHeight: 19, marginBottom: 10 },
+  exSection: { backgroundColor: '#F8F9FB', borderRadius: 10, padding: 10, marginBottom: 10 },
+  exSectionTitle: { fontSize: 10, fontWeight: '700', color: '#888', letterSpacing: 0.8, marginBottom: 8 },
+  exRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
+  exNum: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#9C27B0', alignItems: 'center', justifyContent: 'center', marginRight: 8, marginTop: 2 },
+  exNumText: { color: 'white', fontSize: 10, fontWeight: 'bold' },
+  exName: { fontSize: 13, fontWeight: '600', color: '#222' },
+  exMeta: { fontSize: 11, color: '#888', marginTop: 1 },
+  exNotes: { fontSize: 11, color: '#666', marginTop: 2, fontStyle: 'italic' },
+  videoBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF0F0', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, alignSelf: 'flex-start', marginBottom: 10 },
+  videoBtnText: { color: '#FF0000', fontWeight: '600', fontSize: 13 },
+  noteSection: { marginBottom: 10 },
+  noteInput: { backgroundColor: '#F8F9FB', borderRadius: 10, borderWidth: 1, borderColor: '#EAECF0', padding: 10, fontSize: 13, color: '#333', minHeight: 50 },
+  actionRow: { flexDirection: 'row', gap: 8 },
+  doneBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#008000', borderRadius: 10, paddingVertical: 10 },
+  doneBtnText: { color: 'white', fontWeight: '700', fontSize: 13 },
+  skipBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: '#FF9800', borderRadius: 10, paddingVertical: 10 },
+  skipBtnText: { color: '#FF9800', fontWeight: '700', fontSize: 13 },
+  undoBtn: { alignSelf: 'flex-end' },
+  undoBtnText: { fontSize: 12, color: '#888', textDecorationLine: 'underline' },
+});
+
 export class TrainingScreen extends Component {
   state = { activeCategory: 'Strength', coachWorkouts: [], loadingCoach: false };
 
-  componentDidMount() {
-    this.loadCoachWorkouts();
-  }
+  componentDidMount() { this._subscribeCoachWorkouts(); }
+  componentWillUnmount() { if (this._unsub) this._unsub(); }
 
-  loadCoachWorkouts = async () => {
+  _subscribeCoachWorkouts = () => {
     const user = auth.currentUser;
     if (!user) return;
     this.setState({ loadingCoach: true });
-    try {
-      const snap = await getDocs(query(collection(db, 'coachTraining', user.uid, 'sessions'), orderBy('timestamp', 'desc'), limit(10)));
-      const coachWorkouts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      this.setState({ coachWorkouts, loadingCoach: false });
-    } catch (e) {
-      this.setState({ loadingCoach: false });
-    }
+    this._unsub = onSnapshot(
+      query(collection(db, 'coachTraining', user.uid, 'sessions'), orderBy('timestamp', 'desc'), limit(20)),
+      (snap) => {
+        const coachWorkouts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        this.setState({ coachWorkouts, loadingCoach: false });
+      },
+      () => this.setState({ loadingCoach: false })
+    );
   };
 
   render() {
@@ -166,15 +311,9 @@ export class TrainingScreen extends Component {
     return (
       <SafeAreaView style={styles.safeArea}>
         <AppHeader navigation={this.props.navigation} title="Training" homeScreen="HomeScreen" />
-
-        {/* Category tabs */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryBar}>
           {CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[styles.catChip, activeCategory === cat && styles.catChipActive]}
-              onPress={() => this.setState({ activeCategory: cat })}
-            >
+            <TouchableOpacity key={cat} style={[styles.catChip, activeCategory === cat && styles.catChipActive]} onPress={() => this.setState({ activeCategory: cat })}>
               <Text style={[styles.catLabel, activeCategory === cat && styles.catLabelActive]}>{cat}</Text>
             </TouchableOpacity>
           ))}
@@ -182,23 +321,14 @@ export class TrainingScreen extends Component {
 
         <ScrollView contentContainerStyle={styles.container}>
           {/* Coach-assigned section */}
-          {coachWorkouts.length > 0 && (
+          {(loadingCoach || coachWorkouts.length > 0) && (
             <View style={styles.coachSection}>
-              <Text style={styles.coachSectionTitle}>Coach Assigned</Text>
-              {coachWorkouts.map((cw) => (
-                <View key={cw.id} style={styles.coachCard}>
-                  <View style={styles.coachCardHeader}>
-                    <Text style={styles.coachCardTitle}>{cw.title}</Text>
-                    {cw.category ? (
-                      <View style={styles.coachCatBadge}>
-                        <Text style={styles.coachCatText}>{cw.category}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  {cw.description ? <Text style={styles.coachCardDesc}>{cw.description}</Text> : null}
-                  {cw.videoUrl ? <Text style={styles.coachCardVideo}>[Video] {cw.videoUrl}</Text> : null}
-                </View>
-              ))}
+              <View style={styles.coachSectionHeader}>
+                <MaterialCommunityIcons name="whistle" size={18} color="#7B1FA2" />
+                <Text style={styles.coachSectionTitle}> Coach Assigned</Text>
+                <View style={styles.coachCountBadge}><Text style={styles.coachCountText}>{coachWorkouts.length}</Text></View>
+              </View>
+              {coachWorkouts.map((cw) => <CoachSessionCard key={cw.id} session={cw} />)}
             </View>
           )}
 
@@ -211,9 +341,7 @@ export class TrainingScreen extends Component {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F4F6FA' },
-  headerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: 'white', elevation: 2 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#222' },
+  safeArea: { flex: 1, backgroundColor: '#F0F2F5' },
   categoryBar: { backgroundColor: 'white', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#eee' },
   catChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#ddd', marginRight: 8, backgroundColor: '#F4F6FA' },
   catChipActive: { backgroundColor: '#008000', borderColor: '#008000' },
@@ -222,17 +350,10 @@ const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 40 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#222', marginBottom: 14 },
   coachSection: { marginBottom: 20 },
-  coachSectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#9C27B0', marginBottom: 12 },
-  coachCard: {
-    backgroundColor: '#f3e5f5', borderRadius: 14, padding: 14, marginBottom: 10,
-    borderLeftWidth: 4, borderLeftColor: '#9C27B0',
-  },
-  coachCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  coachCardTitle: { fontSize: 14, fontWeight: '700', color: '#4A148C', flex: 1 },
-  coachCatBadge: { backgroundColor: '#9C27B0', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  coachCatText: { color: 'white', fontSize: 11, fontWeight: '600' },
-  coachCardDesc: { fontSize: 13, color: '#555', lineHeight: 19 },
-  coachCardVideo: { fontSize: 12, color: '#2196F3', marginTop: 6 },
+  coachSectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  coachSectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#7B1FA2', flex: 1 },
+  coachCountBadge: { backgroundColor: '#9C27B0', borderRadius: 12, paddingHorizontal: 8, paddingVertical: 2 },
+  coachCountText: { color: 'white', fontSize: 12, fontWeight: '700' },
 });
 
 export default TrainingScreen;

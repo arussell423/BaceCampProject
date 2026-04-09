@@ -224,25 +224,57 @@ export class CoachPlayerDetailScreen extends Component {
 
   renderTraining() {
     const { trainingPlans } = this.state;
+    const DIFF_COLORS = { Beginner: '#4CAF50', Intermediate: '#FF9800', Advanced: '#F44336' };
+    const STATUS_CONFIG = {
+      done:    { icon: 'check-circle',  color: '#008000', bg: '#E8F5E9', label: 'Done' },
+      skipped: { icon: 'skip-next',     color: '#FF9800', bg: '#FFF3E0', label: 'Skipped' },
+      pending: { icon: 'schedule',      color: '#888',    bg: '#F5F5F5', label: 'Pending' },
+    };
     return (
       <ScrollView contentContainerStyle={[styles.tabContent, { paddingBottom: 100 }]}>
         {trainingPlans.length === 0 ? (
           <Text style={styles.emptyText}>No coach-assigned training yet.</Text>
         ) : (
-          trainingPlans.map((tp) => (
-            <View key={tp.id} style={styles.trainingCard}>
-              <View style={styles.trainingHeader}>
-                <Text style={styles.trainingTitle}>{tp.title}</Text>
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryBadgeText}>{tp.category}</Text>
+          trainingPlans.map((tp) => {
+            const dc = DIFF_COLORS[tp.difficulty] || '#888';
+            const sc = STATUS_CONFIG[tp.status] || STATUS_CONFIG.pending;
+            const exercises = tp.exercises || [];
+            return (
+              <View key={tp.id} style={[styles.trainingCard, { borderLeftColor: sc.color }]}>
+                {/* Header */}
+                <View style={styles.trainingHeaderRow}>
+                  <Text style={styles.trainingTitle}>{tp.title}</Text>
+                  <View style={[styles.trainingStatusBadge, { backgroundColor: sc.bg }]}>
+                    <MaterialIcons name={sc.icon} size={13} color={sc.color} />
+                    <Text style={[styles.trainingStatusText, { color: sc.color }]}>{sc.label}</Text>
+                  </View>
                 </View>
+                {/* Badges */}
+                <View style={styles.trainingBadgeRow}>
+                  {tp.category ? <View style={styles.categoryBadge}><Text style={styles.categoryBadgeText}>{tp.category}</Text></View> : null}
+                  {tp.difficulty ? <View style={[styles.diffBadge, { backgroundColor: dc + '22', borderColor: dc }]}><Text style={[styles.diffBadgeText, { color: dc }]}>{tp.difficulty}</Text></View> : null}
+                  {tp.rpe ? <View style={styles.rpeBadge}><Text style={styles.rpeBadgeText}>RPE {tp.rpe}</Text></View> : null}
+                </View>
+                {/* Date */}
+                {tp.scheduledDate ? <Text style={styles.trainingDate}>{new Date(tp.scheduledDate).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</Text> : null}
+                {/* Description */}
+                {tp.description ? <Text style={styles.trainingDesc}>{tp.description}</Text> : null}
+                {/* Exercises */}
+                {exercises.length > 0 && (
+                  <View style={styles.trainingExSection}>
+                    <Text style={styles.trainingExTitle}>{exercises.length} EXERCISE{exercises.length > 1 ? 'S' : ''}</Text>
+                    {exercises.map((ex, i) => (
+                      <Text key={i} style={styles.trainingExItem}>{ex.name}  {ex.sets}x{ex.reps}{ex.rest ? `  rest ${ex.rest}` : ''}</Text>
+                    ))}
+                  </View>
+                )}
+                {/* Video */}
+                {tp.videoUrl ? <Text style={styles.videoUrl} numberOfLines={1}>{tp.videoUrl}</Text> : null}
+                {/* Player notes */}
+                {tp.playerNotes ? <Text style={styles.playerNoteText}>Player note: {tp.playerNotes}</Text> : null}
               </View>
-              <Text style={styles.trainingDesc}>{tp.description}</Text>
-              {tp.videoUrl ? (
-                <Text style={styles.videoUrl}>[Video] {tp.videoUrl}</Text>
-              ) : null}
-            </View>
-          ))
+            );
+          })
         )}
       </ScrollView>
     );
@@ -457,13 +489,26 @@ const styles = StyleSheet.create({
   },
   trainingCard: {
     backgroundColor: 'white', borderRadius: 14, padding: 16, marginBottom: 12, elevation: 1,
+    borderLeftWidth: 4, borderLeftColor: '#888',
   },
-  trainingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  trainingHeaderRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 },
+  trainingStatusBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 3, gap: 3 },
+  trainingStatusText: { fontSize: 11, fontWeight: '700' },
+  trainingBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 },
   trainingTitle: { fontSize: 15, fontWeight: '600', color: '#222', flex: 1 },
   categoryBadge: {
     backgroundColor: '#e8f5e9', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3,
   },
   categoryBadgeText: { color: '#008000', fontSize: 11, fontWeight: '600' },
+  diffBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2 },
+  diffBadgeText: { fontSize: 11, fontWeight: '700' },
+  rpeBadge: { backgroundColor: '#FFF3E0', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  rpeBadgeText: { color: '#E65100', fontSize: 11, fontWeight: '700' },
+  trainingDate: { fontSize: 12, color: '#666', marginBottom: 4 },
+  trainingExSection: { backgroundColor: '#F8F9FB', borderRadius: 8, padding: 10, marginTop: 6, marginBottom: 6 },
+  trainingExTitle: { fontSize: 10, fontWeight: '700', color: '#888', letterSpacing: 0.8, marginBottom: 6 },
+  trainingExItem: { fontSize: 12, color: '#444', lineHeight: 20 },
+  playerNoteText: { fontSize: 12, color: '#666', fontStyle: 'italic', marginTop: 6, backgroundColor: '#FFFDE7', borderRadius: 6, padding: 6 },
   trainingDesc: { fontSize: 13, color: '#555', lineHeight: 19 },
   videoUrl: { fontSize: 12, color: '#2196F3', marginTop: 8 },
   historyItem: {

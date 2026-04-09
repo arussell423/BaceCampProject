@@ -44,7 +44,8 @@ const CoachHomeScreen         = lazy(() => require('../screens/coach/CoachHomeSc
 const CoachRosterScreen       = lazy(() => require('../screens/coach/CoachRosterScreen'));
 const CoachPlayerDetailScreen = lazy(() => require('../screens/coach/CoachPlayerDetailScreen'));
 const CoachSendFeedbackScreen = lazy(() => require('../screens/coach/CoachSendFeedbackScreen'));
-const CoachAddTrainingScreen  = lazy(() => require('../screens/coach/CoachAddTrainingScreen'));
+const CoachAddTrainingScreen      = lazy(() => require('../screens/coach/CoachAddTrainingScreen'));
+const CoachTemplateLibraryScreen  = lazy(() => require('../screens/coach/CoachTemplateLibraryScreen'));
 const CoachCalendarScreen     = lazy(() => require('../screens/coach/CoachCalendarScreen'));
 const CoachDashboardScreen    = lazy(() => require('../screens/coach/CoachDashboardScreen'));
 
@@ -211,7 +212,8 @@ export function RootNavigator({ user, role }) {
             <Stack.Screen name="CoachRosterScreen"       component={CoachRosterScreen} />
             <Stack.Screen name="CoachPlayerDetailScreen" component={CoachPlayerDetailScreen} />
             <Stack.Screen name="CoachSendFeedbackScreen" component={CoachSendFeedbackScreen} />
-            <Stack.Screen name="CoachAddTrainingScreen"  component={CoachAddTrainingScreen} />
+            <Stack.Screen name="CoachAddTrainingScreen"      component={CoachAddTrainingScreen} />
+            <Stack.Screen name="CoachTemplateLibraryScreen"  component={CoachTemplateLibraryScreen} />
             <Stack.Screen name="CoachCalendarScreen"     component={CoachCalendarScreen} />
             <Stack.Screen name="CoachDashboardScreen"    component={CoachDashboardScreen} />
             <Stack.Screen name="ProfileScreen"           component={ProfileScreen} />
